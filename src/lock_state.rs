@@ -1,3 +1,5 @@
+use std::process::Command;
+
 use wayland_client::protocol::wl_compositor::WlCompositor;
 use wayland_client::protocol::wl_registry::Event;
 use wayland_client::protocol::wl_seat::WlSeat;
@@ -15,6 +17,7 @@ use wayland_protocols::xdg::shell::client::xdg_toplevel::XdgToplevel;
 use wayland_protocols::xdg::shell::client::xdg_wm_base::XdgWmBase;
 
 use crate::lockgtk::LockGTK;
+use gtk4::prelude::*;
 
 pub struct LockState {
     pub locked: bool,
@@ -96,7 +99,7 @@ impl Dispatch<ExtSessionLockManagerV1, ()> for LockState {
 
 impl Dispatch<ExtSessionLockV1, ()> for LockState {
     fn event(
-        _state: &mut Self,
+        state: &mut Self,
         _proxy: &ExtSessionLockV1,
         event: <ExtSessionLockV1 as Proxy>::Event,
         _data: &(),
@@ -106,6 +109,8 @@ impl Dispatch<ExtSessionLockV1, ()> for LockState {
         tracing::debug!("Dispatched ExtSessionLockV1 For LockState");
         match event {
             ext_session_lock_v1::Event::Locked => {
+                //let lock = LockGTK::create();
+                Command::new("swaylock");
                 tracing::debug!("Event Locked fired");
             }
             ext_session_lock_v1::Event::Finished => {

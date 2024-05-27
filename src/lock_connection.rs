@@ -92,6 +92,7 @@ impl LockConnection {
             base_surface: None,
             xdg_surface: None,
             wm_base: None,
+            gtk_lock: None,
             session_lock_surfaces: Vec::new(),
         };
         let mut event_queue = self.conn.new_event_queue::<LockState>();

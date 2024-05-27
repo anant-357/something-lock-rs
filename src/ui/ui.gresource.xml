@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
 	<gresource prefix="/gtklock">
-		<file preprocess="xml-stripblanks">gtklock.ui</file>
+		<file preprocess="xml-stripblanks">lockgtk.ui</file>
 	</gresource>
 </gresources>
