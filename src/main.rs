@@ -1,11 +1,10 @@
-use lock_connection::LockConnection;
+mod app_data;
+mod lock_data;
+mod pam;
+
+use app_data::AppData;
 use std::io;
 use tracing::Level;
-mod lock_connection;
-mod lock_state;
-mod lockgtk;
-mod output;
-//mod xdg_shell;
 
 fn initialize_tracing() {
     tracing_subscriber::fmt()
@@ -17,6 +16,5 @@ fn initialize_tracing() {
 
 fn main() {
     initialize_tracing();
-    let conn = LockConnection::connect();
-    conn.lock();
+    AppData::connect();
 }
