@@ -1,4 +1,5 @@
 mod app_data;
+mod handlers;
 mod lock_data;
 mod pam;
 
