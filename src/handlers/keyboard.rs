@@ -8,54 +8,58 @@ use crate::app_data::AppData;
 impl KeyboardHandler for AppData {
     fn enter(
         &mut self,
-        conn: &Connection,
-        qh: &QueueHandle<Self>,
-        keyboard: &smithay_client_toolkit::reexports::client::protocol::wl_keyboard::WlKeyboard,
-        surface: &wl_surface::WlSurface,
-        serial: u32,
-        raw: &[u32],
-        keysyms: &[smithay_client_toolkit::seat::keyboard::Keysym],
+        _conn: &Connection,
+        _qh: &QueueHandle<Self>,
+        _keyboard: &smithay_client_toolkit::reexports::client::protocol::wl_keyboard::WlKeyboard,
+        _surface: &wl_surface::WlSurface,
+        _serial: u32,
+        _raw: &[u32],
+        _keysyms: &[smithay_client_toolkit::seat::keyboard::Keysym],
     ) {
     }
 
     fn leave(
         &mut self,
-        conn: &Connection,
-        qh: &QueueHandle<Self>,
-        keyboard: &smithay_client_toolkit::reexports::client::protocol::wl_keyboard::WlKeyboard,
-        surface: &wl_surface::WlSurface,
-        serial: u32,
+        _conn: &Connection,
+        _qh: &QueueHandle<Self>,
+        _keyboard: &smithay_client_toolkit::reexports::client::protocol::wl_keyboard::WlKeyboard,
+        _surface: &wl_surface::WlSurface,
+        _serial: u32,
     ) {
     }
 
     fn press_key(
         &mut self,
-        conn: &Connection,
-        qh: &QueueHandle<Self>,
-        keyboard: &smithay_client_toolkit::reexports::client::protocol::wl_keyboard::WlKeyboard,
-        serial: u32,
+        _conn: &Connection,
+        _qh: &QueueHandle<Self>,
+        _keyboard: &smithay_client_toolkit::reexports::client::protocol::wl_keyboard::WlKeyboard,
+        _serial: u32,
         event: smithay_client_toolkit::seat::keyboard::KeyEvent,
     ) {
+        tracing::trace!("Key press: {event:?}");
+        self.lock_data.unlock();
+        self.conn.roundtrip().unwrap();
+        self.exit = true;
     }
 
     fn release_key(
         &mut self,
-        conn: &Connection,
-        qh: &QueueHandle<Self>,
-        keyboard: &smithay_client_toolkit::reexports::client::protocol::wl_keyboard::WlKeyboard,
-        serial: u32,
-        event: smithay_client_toolkit::seat::keyboard::KeyEvent,
+        _conn: &Connection,
+        _qh: &QueueHandle<Self>,
+        _keyboard: &smithay_client_toolkit::reexports::client::protocol::wl_keyboard::WlKeyboard,
+        _serial: u32,
+        _event: smithay_client_toolkit::seat::keyboard::KeyEvent,
     ) {
     }
 
     fn update_modifiers(
         &mut self,
-        conn: &Connection,
-        qh: &QueueHandle<Self>,
-        keyboard: &smithay_client_toolkit::reexports::client::protocol::wl_keyboard::WlKeyboard,
-        serial: u32,
-        modifiers: smithay_client_toolkit::seat::keyboard::Modifiers,
-        layout: u32,
+        _conn: &Connection,
+        _qh: &QueueHandle<Self>,
+        _keyboard: &smithay_client_toolkit::reexports::client::protocol::wl_keyboard::WlKeyboard,
+        _serial: u32,
+        _modifiers: smithay_client_toolkit::seat::keyboard::Modifiers,
+        _layout: u32,
     ) {
     }
 

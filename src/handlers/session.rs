@@ -23,19 +23,6 @@ impl SessionLockHandler for AppData {
                 app_data.lock_data.add_surface(lock_surface);
             });
         }
-
-        self.loop_handle
-            .insert_source(
-                Timer::from_duration(Duration::from_secs(5)),
-                |_, _, app_data| {
-                    app_data.lock_data.unlock();
-                    app_data.conn.roundtrip().unwrap();
-                    // Then we can exit
-                    app_data.exit = true;
-                    smithay_client_toolkit::reexports::calloop::timer::TimeoutAction::Drop
-                },
-            )
-            .unwrap();
     }
 
     fn finished(
