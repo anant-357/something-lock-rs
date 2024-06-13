@@ -26,6 +26,7 @@ pub struct AppData {
     pub registry_state: RegistryState,
     pub seat_state: SeatState,
     pub keyboard: Option<WlKeyboard>,
+    pub password_buffer: String,
     pub lock_data: LockData,
     pub exit: bool,
 }
@@ -47,6 +48,7 @@ impl AppData {
             registry_state: RegistryState::new(&globals),
             seat_state: SeatState::new(&globals, &qh),
             keyboard: None,
+            password_buffer: String::new(),
             lock_data: LockData::from_state(SessionLockState::new(&globals, &qh)),
             exit: false,
         };

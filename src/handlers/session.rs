@@ -1,10 +1,5 @@
-use std::time::Duration;
-
 use smithay_client_toolkit::{
-    reexports::{
-        calloop::timer::Timer,
-        client::{Connection, QueueHandle},
-    },
+    reexports::client::{Connection, QueueHandle},
     session_lock::{
         SessionLock, SessionLockHandler, SessionLockSurface, SessionLockSurfaceConfigure,
     },

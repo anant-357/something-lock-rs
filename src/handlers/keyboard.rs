@@ -1,6 +1,6 @@
 use smithay_client_toolkit::{
     reexports::client::{protocol::wl_surface, Connection, QueueHandle},
-    seat::keyboard::KeyboardHandler,
+    seat::keyboard::{KeyboardHandler, Keysym},
 };
 
 use crate::app_data::AppData;
@@ -37,9 +37,23 @@ impl KeyboardHandler for AppData {
         event: smithay_client_toolkit::seat::keyboard::KeyEvent,
     ) {
         tracing::trace!("Key press: {event:?}");
-        self.lock_data.unlock();
-        self.conn.roundtrip().unwrap();
-        self.exit = true;
+        if event.keysym == Keysym::Return {
+            if self.password_buffer == String::from("hello") {
+                self.lock_data.unlock();
+                self.conn.roundtrip().unwrap();
+                self.exit = true;
+                return;
+            } else {
+                self.password_buffer = String::new();
+                return;
+            }
+        }
+        let key_char = event.keysym.key_char();
+        if key_char.is_none() {
+            return;
+        } else {
+            self.password_buffer.push(key_char.unwrap());
+        }
     }
 
     fn release_key(
@@ -58,9 +72,10 @@ impl KeyboardHandler for AppData {
         _qh: &QueueHandle<Self>,
         _keyboard: &smithay_client_toolkit::reexports::client::protocol::wl_keyboard::WlKeyboard,
         _serial: u32,
-        _modifiers: smithay_client_toolkit::seat::keyboard::Modifiers,
+        modifiers: smithay_client_toolkit::seat::keyboard::Modifiers,
         _layout: u32,
     ) {
+        tracing::trace!("Keyboard Handler: Update Modifiers {modifiers:?}");
     }
 
     fn update_repeat_info(
@@ -68,8 +83,9 @@ impl KeyboardHandler for AppData {
         _conn: &Connection,
         _qh: &QueueHandle<Self>,
         _keyboard: &smithay_client_toolkit::reexports::client::protocol::wl_keyboard::WlKeyboard,
-        _info: smithay_client_toolkit::seat::keyboard::RepeatInfo,
+        info: smithay_client_toolkit::seat::keyboard::RepeatInfo,
     ) {
+        tracing::trace!("Keyboard Handler: Update Repeat Information {info:?}");
     }
 
     fn update_keymap(
