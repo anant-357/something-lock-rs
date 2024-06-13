@@ -36,24 +36,33 @@ impl KeyboardHandler for AppData {
         _serial: u32,
         event: smithay_client_toolkit::seat::keyboard::KeyEvent,
     ) {
-        tracing::trace!("Key press: {event:?}");
+        tracing::trace!(
+            "Entering Key press: {event:?}, password_buffer: {}",
+            self.lock_data.password_buffer
+        );
         if event.keysym == Keysym::Return {
-            if self.password_buffer == String::from("hello") {
-                self.lock_data.unlock();
-                self.conn.roundtrip().unwrap();
-                self.exit = true;
-                return;
-            } else {
-                self.password_buffer = String::new();
-                return;
+            match self.lock_data.unlock_with_auth() {
+                Ok(_) => {
+                    tracing::trace!("Authenticated, unlocked!");
+                }
+                Err(e) => tracing::warn!("{e}"),
             }
+            self.exit = true;
+            self.conn.roundtrip().unwrap();
+        } else if event.keysym == Keysym::BackSpace {
+            tracing::trace!("Backspacing!");
+            self.lock_data.password_buffer.pop();
         }
         let key_char = event.keysym.key_char();
         if key_char.is_none() {
             return;
         } else {
-            self.password_buffer.push(key_char.unwrap());
+            self.lock_data.password_buffer.push(key_char.unwrap());
         }
+        tracing::trace!(
+            "Leaving Key press: {event:?}, password_buffer: {}",
+            self.lock_data.password_buffer
+        );
     }
 
     fn release_key(
