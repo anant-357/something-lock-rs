@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{path::Path, time::Duration};
 
 use smithay_client_toolkit::{
     compositor::CompositorState,
@@ -14,23 +14,22 @@ use smithay_client_toolkit::{
     registry::RegistryState,
     seat::SeatState,
     session_lock::SessionLockState,
-    shell::wlr_layer::LayerShell,
     shm::Shm,
 };
 
-use crate::{lock_data::LockData, lock_screen::Layer};
+use crate::lock_data::LockData;
 
 pub struct AppData {
-    pub loop_handle: LoopHandle<'static, Self>,
     pub conn: Connection,
+    pub loop_handle: LoopHandle<'static, Self>,
     pub compositor_state: CompositorState,
-    pub layer: Layer,
-    pub shm: Shm,
-    pub output_state: OutputState,
     pub registry_state: RegistryState,
+    pub output_state: OutputState,
+    pub shm: Shm,
     pub seat_state: SeatState,
     pub keyboard: Option<WlKeyboard>,
     pub lock_data: LockData,
+    pub image: Option<image::DynamicImage>,
     pub exit: bool,
 }
 
@@ -42,31 +41,19 @@ impl AppData {
         let qh: QueueHandle<AppData> = event_queue.handle();
         let mut event_loop: EventLoop<AppData> =
             EventLoop::try_new().expect("Failed to initialize the event loop!");
-        let compositor = CompositorState::bind(&globals, &qh).unwrap();
-        let surface = compositor.create_surface(&qh);
-        let layer_shell = LayerShell::bind(&globals, &qh).unwrap();
-        let layer_surface = layer_shell.create_layer_surface(
-            &qh,
-            surface,
-            smithay_client_toolkit::shell::wlr_layer::Layer::Top,
-            Some("Lock Screen"),
-            None,
-        );
 
         let mut app_data = AppData {
             loop_handle: event_loop.handle(),
             conn: conn.clone(),
-            compositor_state: compositor,
+            compositor_state: CompositorState::bind(&globals, &qh).unwrap(),
             output_state: OutputState::new(&globals, &qh),
             registry_state: RegistryState::new(&globals),
             seat_state: SeatState::new(&globals, &qh),
             shm: Shm::bind(&globals, &qh).unwrap(),
-            layer: Layer {
-                layer_surface,
-                width: 0,
-                height: 0,
-            },
             keyboard: None,
+            image: Some(
+                image::open(Path::new("gruvbox_light.png")).expect("Unable to open image!"),
+            ),
             lock_data: LockData::from_state(SessionLockState::new(&globals, &qh)),
             exit: false,
         };

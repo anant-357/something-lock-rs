@@ -1,7 +1,6 @@
 mod app_data;
 mod handlers;
 mod lock_data;
-mod lock_screen;
 mod pam;
 
 use app_data::AppData;
