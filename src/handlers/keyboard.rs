@@ -40,24 +40,28 @@ impl KeyboardHandler for AppData {
             "Entering Key press: {event:?}, password_buffer: {}",
             self.lock_data.password_buffer
         );
-        if event.keysym == Keysym::Return {
-            match self.lock_data.unlock_with_auth() {
-                Ok(_) => {
-                    tracing::trace!("Authenticated, unlocked!");
+        match event.keysym {
+            Keysym::Return => {
+                match self.lock_data.unlock_with_auth() {
+                    Ok(_) => {
+                        tracing::trace!("Authenticated, unlocked!");
+                    }
+                    Err(e) => tracing::warn!("{e}"),
                 }
-                Err(e) => tracing::warn!("{e}"),
+                self.exit = true;
+                self.conn.roundtrip().unwrap();
             }
-            self.exit = true;
-            self.conn.roundtrip().unwrap();
-        } else if event.keysym == Keysym::BackSpace {
-            tracing::trace!("Backspacing!");
-            self.lock_data.password_buffer.pop();
-        }
-        let key_char = event.keysym.key_char();
-        if key_char.is_none() {
-            return;
-        } else {
-            self.lock_data.password_buffer.push(key_char.unwrap());
+            Keysym::BackSpace => {
+                tracing::trace!("Backspacing!");
+                self.lock_data.password_buffer.pop();
+                return;
+            }
+            _ => {
+                let key_char = event.keysym.key_char();
+                if key_char.is_some() {
+                    self.lock_data.password_buffer.push(key_char.unwrap());
+                }
+            }
         }
         tracing::trace!(
             "Leaving Key press: {event:?}, password_buffer: {}",
