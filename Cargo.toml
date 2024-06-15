@@ -1,5 +1,5 @@
 [package]
-name = "gtk-lock-rs"
+name = "something-lock-rs"
 version = "0.1.0"
 edition = "2021"
 

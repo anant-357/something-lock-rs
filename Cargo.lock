@@ -410,18 +410,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d2fabcfbdc87f4758337ca535fb41a6d701b65693ce38287d856d1674551ec9b"
 
 [[package]]
-name = "gtk-lock-rs"
-version = "0.1.0"
-dependencies = [
- "image",
- "pam",
- "smithay-client-toolkit",
- "tracing",
- "tracing-subscriber",
- "whoami",
-]
-
-[[package]]
 name = "half"
 version = "2.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1187,6 +1175,18 @@ dependencies = [
  "wayland-scanner",
  "xkbcommon",
  "xkeysym",
+]
+
+[[package]]
+name = "something-lock-rs"
+version = "0.1.0"
+dependencies = [
+ "image",
+ "pam",
+ "smithay-client-toolkit",
+ "tracing",
+ "tracing-subscriber",
+ "whoami",
 ]
 
 [[package]]
