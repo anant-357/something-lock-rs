@@ -1,4 +1,3 @@
-use image::GenericImageView;
 use smithay_client_toolkit::{
     reexports::client::{protocol::wl_shm, Connection, QueueHandle},
     session_lock::{
@@ -40,18 +39,24 @@ impl SessionLockHandler for AppData {
         configure: SessionLockSurfaceConfigure,
         _serial: u32,
     ) {
+        tracing::trace!("Starting SessionLockSurface configure");
         let (width, height) = configure.new_size;
         let mut pool = RawPool::new(width as usize * height as usize * 4, &self.shm).unwrap();
         let canvas = pool.mmap();
+        tracing::trace!("Created pool and canvas!");
         if self.image.is_some() {
-            let image_rgba8 = self.image.clone().unwrap().to_rgba8();
-            {
-                let image = image::imageops::resize(
-                    &image_rgba8,
+            let mut image = self.image_buffer.clone().unwrap();
+            if width != image.width() || height != image.height() {
+                image = image::imageops::resize(
+                    &image,
                     width,
                     height,
                     image::imageops::FilterType::Nearest,
                 );
+                self.image_buffer = Some(image.clone());
+                tracing::trace!("Resized image!");
+            }
+            {
                 for (pixel, argb) in image.pixels().zip(canvas.chunks_exact_mut(4)) {
                     argb[3] = pixel.0[3];
                     argb[2] = pixel.0[0];
@@ -59,21 +64,8 @@ impl SessionLockHandler for AppData {
                     argb[0] = pixel.0[2];
                 }
             }
-            let buffer = pool.create_buffer(
-                0,
-                width as i32,
-                height as i32,
-                width as i32 * 4,
-                wl_shm::Format::Argb8888,
-                (),
-                qh,
-            );
-            session_lock_surface
-                .wl_surface()
-                .attach(Some(&buffer), 0, 0);
-            session_lock_surface.wl_surface().commit();
 
-            buffer.destroy();
+            tracing::trace!("Converted pixels!");
         } else {
             canvas
                 .chunks_exact_mut(4)
@@ -91,23 +83,24 @@ impl SessionLockHandler for AppData {
                     let array: &mut [u8; 4] = chunk.try_into().unwrap();
                     *array = color.to_le_bytes();
                 });
-            let buffer = pool.create_buffer(
-                0,
-                width as i32,
-                height as i32,
-                width as i32 * 4,
-                wl_shm::Format::Argb8888,
-                (),
-                qh,
-            );
-
-            session_lock_surface
-                .wl_surface()
-                .attach(Some(&buffer), 0, 0);
-            session_lock_surface.wl_surface().commit();
-
-            buffer.destroy();
         }
+        let buffer = pool.create_buffer(
+            0,
+            width as i32,
+            height as i32,
+            width as i32 * 4,
+            wl_shm::Format::Argb8888,
+            (),
+            qh,
+        );
+
+        session_lock_surface
+            .wl_surface()
+            .attach(Some(&buffer), 0, 0);
+        session_lock_surface.wl_surface().commit();
+        tracing::trace!("Buffer Attatched!");
+
+        buffer.destroy();
     }
 }
 smithay_client_toolkit::delegate_session_lock!(AppData);

@@ -30,6 +30,7 @@ pub struct AppData {
     pub keyboard: Option<WlKeyboard>,
     pub lock_data: LockData,
     pub image: Option<image::DynamicImage>,
+    pub image_buffer: Option<image::RgbaImage>,
     pub exit: bool,
 }
 
@@ -41,6 +42,10 @@ impl AppData {
         let qh: QueueHandle<AppData> = event_queue.handle();
         let mut event_loop: EventLoop<AppData> =
             EventLoop::try_new().expect("Failed to initialize the event loop!");
+        let image = image::open(Path::new("gruvbox_light.png")).expect("Unable to open image!");
+
+        let image_buffer =
+            image::imageops::resize(&image, 1920, 1080, image::imageops::FilterType::Nearest);
 
         let mut app_data = AppData {
             loop_handle: event_loop.handle(),
@@ -48,19 +53,18 @@ impl AppData {
             compositor_state: CompositorState::bind(&globals, &qh).unwrap(),
             output_state: OutputState::new(&globals, &qh),
             registry_state: RegistryState::new(&globals),
+            lock_data: LockData::from_state(SessionLockState::new(&globals, &qh)),
             seat_state: SeatState::new(&globals, &qh),
             shm: Shm::bind(&globals, &qh).unwrap(),
             keyboard: None,
-            image: Some(
-                image::open(Path::new("gruvbox_light.png")).expect("Unable to open image!"),
-            ),
-            lock_data: LockData::from_state(SessionLockState::new(&globals, &qh)),
+            image_buffer: Some(image_buffer),
+            image: Some(image),
             exit: false,
         };
 
         app_data.lock_data.lock(&qh);
 
-        WaylandSource::new(conn.clone(), event_queue)
+        WaylandSource::new(conn, event_queue)
             .insert(event_loop.handle())
             .unwrap();
 
