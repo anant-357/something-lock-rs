@@ -17,7 +17,7 @@ use smithay_client_toolkit::{
     shm::Shm,
 };
 
-use crate::lock_data::LockData;
+use crate::{conf::Config, lock_data::LockData};
 
 pub struct AppData {
     pub conn: Connection,
@@ -31,18 +31,19 @@ pub struct AppData {
     pub lock_data: LockData,
     pub image: Option<image::DynamicImage>,
     pub image_buffer: Option<image::RgbaImage>,
+    pub config: Config,
     pub exit: bool,
 }
 
 impl AppData {
-    pub fn connect() {
+    pub fn connect(config: Config) {
         let conn = Connection::connect_to_env().unwrap();
 
         let (globals, event_queue) = registry_queue_init(&conn).unwrap();
         let qh: QueueHandle<AppData> = event_queue.handle();
         let mut event_loop: EventLoop<AppData> =
             EventLoop::try_new().expect("Failed to initialize the event loop!");
-        let image = image::open(Path::new("gruvbox_light.png")).expect("Unable to open image!");
+        let image = image::open(config.media_path.as_path()).expect("Unable to open image!");
 
         let image_buffer =
             image::imageops::resize(&image, 1920, 1080, image::imageops::FilterType::Nearest);
@@ -59,6 +60,7 @@ impl AppData {
             keyboard: None,
             image_buffer: Some(image_buffer),
             image: Some(image),
+            config,
             exit: false,
         };
 

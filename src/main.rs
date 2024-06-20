@@ -1,9 +1,11 @@
 mod app_data;
+mod conf;
 mod handlers;
 mod lock_data;
 mod pam;
 
 use app_data::AppData;
+use conf::Config;
 use std::io;
 use tracing::Level;
 
@@ -17,5 +19,6 @@ fn initialize_tracing() {
 
 fn main() {
     initialize_tracing();
-    AppData::connect();
+    let config = Config::from_config_file();
+    AppData::connect(config);
 }
