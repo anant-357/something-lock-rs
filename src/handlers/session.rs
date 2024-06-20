@@ -6,7 +6,7 @@ use smithay_client_toolkit::{
     shm::raw::RawPool,
 };
 
-use crate::app_data::AppData;
+use crate::{app_data::AppData, media::MediaType};
 
 impl SessionLockHandler for AppData {
     fn locked(&mut self, _conn: &Connection, qh: &QueueHandle<Self>, session_lock: SessionLock) {
@@ -44,46 +44,51 @@ impl SessionLockHandler for AppData {
         let mut pool = RawPool::new(width as usize * height as usize * 4, &self.shm).unwrap();
         let canvas = pool.mmap();
         tracing::trace!("Created pool and canvas!");
-        if self.image.is_some() {
-            let mut image = self.image_buffer.clone().unwrap();
-            if width != image.width() || height != image.height() {
-                image = image::imageops::resize(
-                    &image,
-                    width,
-                    height,
-                    image::imageops::FilterType::Nearest,
-                );
-                self.image_buffer = Some(image.clone());
-                tracing::trace!("Resized image!");
-            }
-            {
-                for (pixel, argb) in image.pixels().zip(canvas.chunks_exact_mut(4)) {
-                    argb[3] = pixel.0[3];
-                    argb[2] = pixel.0[0];
-                    argb[1] = pixel.0[1];
-                    argb[0] = pixel.0[2];
+        match self.media.base {
+            MediaType::Image(ref mut i) => {
+                let mut image = i.buffer.clone();
+                if width != image.width() || height != image.height() {
+                    image = image::imageops::resize(
+                        &image,
+                        width,
+                        height,
+                        image::imageops::FilterType::Nearest,
+                    );
+                    i.set_buffer(image.clone());
+                    tracing::trace!("Resized image!");
                 }
+                {
+                    for (pixel, argb) in image.pixels().zip(canvas.chunks_exact_mut(4)) {
+                        argb[3] = pixel.0[3];
+                        argb[2] = pixel.0[0];
+                        argb[1] = pixel.0[1];
+                        argb[0] = pixel.0[2];
+                    }
+                }
+
+                tracing::trace!("Converted pixels!");
             }
+            _ => {
+                canvas
+                    .chunks_exact_mut(4)
+                    .enumerate()
+                    .for_each(|(index, chunk)| {
+                        let x = (index % width as usize) as u32;
+                        let y = (index / width as usize) as u32;
 
-            tracing::trace!("Converted pixels!");
-        } else {
-            canvas
-                .chunks_exact_mut(4)
-                .enumerate()
-                .for_each(|(index, chunk)| {
-                    let x = (index % width as usize) as u32;
-                    let y = (index / width as usize) as u32;
+                        let a = 0xFF;
+                        let r =
+                            u32::min(((width - x) * 0xFF) / width, ((height - y) * 0xFF) / height);
+                        let g = u32::min((x * 0xFF) / width, ((height - y) * 0xFF) / height);
+                        let b = u32::min(((width - x) * 0xFF) / width, (y * 0xFF) / height);
+                        let color = (a << 24) + (r << 16) + (g << 8) + b;
 
-                    let a = 0xFF;
-                    let r = u32::min(((width - x) * 0xFF) / width, ((height - y) * 0xFF) / height);
-                    let g = u32::min((x * 0xFF) / width, ((height - y) * 0xFF) / height);
-                    let b = u32::min(((width - x) * 0xFF) / width, (y * 0xFF) / height);
-                    let color = (a << 24) + (r << 16) + (g << 8) + b;
+                        let array: &mut [u8; 4] = chunk.try_into().unwrap();
+                        *array = color.to_le_bytes();
+                    });
+            }
+        };
 
-                    let array: &mut [u8; 4] = chunk.try_into().unwrap();
-                    *array = color.to_le_bytes();
-                });
-        }
         let buffer = pool.create_buffer(
             0,
             width as i32,

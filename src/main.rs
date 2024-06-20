@@ -2,6 +2,7 @@ mod app_data;
 mod conf;
 mod handlers;
 mod lock_data;
+mod media;
 mod pam;
 
 use app_data::AppData;

@@ -17,7 +17,7 @@ use smithay_client_toolkit::{
     shm::Shm,
 };
 
-use crate::{conf::Config, lock_data::LockData};
+use crate::{conf::Config, lock_data::LockData, media::Media};
 
 pub struct AppData {
     pub conn: Connection,
@@ -29,8 +29,7 @@ pub struct AppData {
     pub seat_state: SeatState,
     pub keyboard: Option<WlKeyboard>,
     pub lock_data: LockData,
-    pub image: Option<image::DynamicImage>,
-    pub image_buffer: Option<image::RgbaImage>,
+    pub media: Media,
     pub config: Config,
     pub exit: bool,
 }
@@ -43,11 +42,6 @@ impl AppData {
         let qh: QueueHandle<AppData> = event_queue.handle();
         let mut event_loop: EventLoop<AppData> =
             EventLoop::try_new().expect("Failed to initialize the event loop!");
-        let image = image::open(config.media_path.as_path()).expect("Unable to open image!");
-
-        let image_buffer =
-            image::imageops::resize(&image, 1920, 1080, image::imageops::FilterType::Nearest);
-
         let mut app_data = AppData {
             loop_handle: event_loop.handle(),
             conn: conn.clone(),
@@ -58,8 +52,7 @@ impl AppData {
             seat_state: SeatState::new(&globals, &qh),
             shm: Shm::bind(&globals, &qh).unwrap(),
             keyboard: None,
-            image_buffer: Some(image_buffer),
-            image: Some(image),
+            media: Media::from_config(&config),
             config,
             exit: false,
         };

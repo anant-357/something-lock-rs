@@ -13,4 +13,5 @@ smithay-client-toolkit = "0.19.1"
 whoami = "1.5.1"
 image = "0.25.1"
 rust-ini = "0.21.0"
+gstreamer = "0.22.6"
 
