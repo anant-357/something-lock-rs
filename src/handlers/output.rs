@@ -14,8 +14,9 @@ impl OutputHandler for AppData {
         &mut self,
         _conn: &Connection,
         _qh: &QueueHandle<Self>,
-        _output: wl_output::WlOutput,
+        output: wl_output::WlOutput,
     ) {
+        tracing::trace!("{:#?}", output);
     }
 
     fn update_output(

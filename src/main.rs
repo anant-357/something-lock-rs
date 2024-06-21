@@ -1,5 +1,6 @@
 mod app_data;
 mod conf;
+//mod drm;
 mod handlers;
 mod lock_data;
 mod media;

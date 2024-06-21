@@ -14,4 +14,8 @@ whoami = "1.5.1"
 image = "0.25.1"
 rust-ini = "0.21.0"
 gstreamer = "0.22.6"
+wayland-backend = { version = "0.3.4", features = ["client_system", "raw-window-handle"] }
+drm = "0.12.0"
+pipewire = "0.8.0"
+libspa = "0.8.0"
 

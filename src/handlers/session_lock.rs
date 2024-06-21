@@ -87,7 +87,7 @@ impl SessionLockHandler for AppData {
                         let r =
                             u32::min(((width - x) * 0xFF) / width, ((height - y) * 0xFF) / height);
                         let g = u32::min((x * 0xFF) / width, ((height - y) * 0xFF) / height);
-                        lee quality,filmt b = u32::min(((width - x) * 0xFF) / width, (y * 0xFF) / height);
+                        let b = u32::min(((width - x) * 0xFF) / width, (y * 0xFF) / height);
                         let color = (a << 24) + (r << 16) + (g << 8) + b;
 
                         let array: &mut [u8; 4] = chunk.try_into().unwrap();
