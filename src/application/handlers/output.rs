@@ -3,7 +3,7 @@ use smithay_client_toolkit::{
     reexports::client::{protocol::wl_output, Connection, QueueHandle},
 };
 
-use crate::app_data::AppData;
+use crate::application::AppData;
 
 impl OutputHandler for AppData {
     fn output_state(&mut self) -> &mut OutputState {

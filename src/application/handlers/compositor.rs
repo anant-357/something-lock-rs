@@ -6,7 +6,7 @@ use smithay_client_toolkit::{
     },
 };
 
-use crate::app_data::AppData;
+use crate::application::AppData;
 
 impl CompositorHandler for AppData {
     fn scale_factor_changed(

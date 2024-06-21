@@ -1,19 +1,12 @@
-use std::{borrow::BorrowMut, u32};
-
-use drm::buffer::DrmFourcc;
 use smithay_client_toolkit::{
-    dmabuf::{DmabufFormat, DmabufParams},
-    reexports::{
-        client::{protocol::wl_shm, Connection, QueueHandle},
-        protocols::wp::linux_dmabuf::zv1::client::zwp_linux_buffer_params_v1::Flags,
-    },
+    reexports::client::{protocol::wl_shm, Connection, QueueHandle},
     session_lock::{
         SessionLock, SessionLockHandler, SessionLockSurface, SessionLockSurfaceConfigure,
     },
     shm::raw::RawPool,
 };
 
-use crate::{app_data::AppData, media::MediaType};
+use crate::application::{media::MediaType, AppData};
 
 impl SessionLockHandler for AppData {
     fn locked(&mut self, _conn: &Connection, qh: &QueueHandle<Self>, session_lock: SessionLock) {

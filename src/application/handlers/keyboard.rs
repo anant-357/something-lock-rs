@@ -3,7 +3,7 @@ use smithay_client_toolkit::{
     seat::keyboard::{KeyboardHandler, Keysym},
 };
 
-use crate::app_data::AppData;
+use crate::application::AppData;
 
 impl KeyboardHandler for AppData {
     fn enter(

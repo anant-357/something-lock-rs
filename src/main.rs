@@ -1,12 +1,8 @@
-mod app_data;
+mod application;
 mod conf;
-//mod drm;
-mod handlers;
-mod lock_data;
-mod media;
 mod pam;
 
-use app_data::AppData;
+use application::AppData;
 use conf::Config;
 use std::io;
 use tracing::Level;

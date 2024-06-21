@@ -1,6 +1,6 @@
 use smithay_client_toolkit::dmabuf::DmabufHandler;
 
-use crate::app_data::AppData;
+use crate::application::AppData;
 
 impl DmabufHandler for AppData {
     fn dmabuf_state(&mut self) -> &mut smithay_client_toolkit::dmabuf::DmabufState {

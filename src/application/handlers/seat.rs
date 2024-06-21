@@ -3,7 +3,7 @@ use smithay_client_toolkit::{
     seat::{Capability, SeatHandler, SeatState},
 };
 
-use crate::app_data::AppData;
+use crate::application::AppData;
 
 impl SeatHandler for AppData {
     fn new_seat(

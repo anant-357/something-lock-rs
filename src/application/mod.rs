@@ -1,3 +1,10 @@
+mod drm;
+mod handlers;
+mod lock_data;
+mod media;
+
+use lock_data::LockData;
+use media::Media;
 use smithay_client_toolkit::{
     compositor::CompositorState,
     output::OutputState,
@@ -14,7 +21,7 @@ use smithay_client_toolkit::{
     shm::Shm,
 };
 
-use crate::{conf::Config, lock_data::LockData, media::Media};
+use crate::conf::Config;
 
 pub struct AppData {
     pub conn: Connection,

@@ -1,6 +1,6 @@
 use smithay_client_toolkit::shm::ShmHandler;
 
-use crate::app_data::AppData;
+use crate::application::AppData;
 
 impl ShmHandler for AppData {
     fn shm_state(&mut self) -> &mut smithay_client_toolkit::shm::Shm {
