@@ -1,4 +1,7 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, process};
+
+use image::DynamicImage;
+use tracing::error;
 
 pub struct Image {
     pub base: image::DynamicImage,
@@ -7,7 +10,16 @@ pub struct Image {
 
 impl Image {
     pub fn from_path(p: &PathBuf) -> Self {
-        let image = image::open(p.as_path()).expect("Unable to open image!");
+        let image = match image::open(p.as_path()) {
+            Ok(image) => image,
+            Err(e) => match p.to_str() {
+                Some("screenshot") => DynamicImage::new(100, 100, image::ColorType::Rgba8),
+                _ => {
+                    error!("Unable to open given path, {}", e);
+                    process::exit(1);
+                }
+            },
+        };
 
         let image_buffer =
             image::imageops::resize(&image, 1920, 1080, image::imageops::FilterType::Nearest);
