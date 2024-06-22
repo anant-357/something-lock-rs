@@ -1,4 +1,4 @@
-mod drm;
+//mod drm;
 mod handlers;
 mod lock_data;
 mod media;
@@ -36,7 +36,7 @@ pub struct AppData {
     pub keyboard: Option<WlKeyboard>,
     pub lock_data: LockData,
     pub media: Media,
-    pub config: Config,
+    pub _config: Config,
     pub exit: bool,
 }
 
@@ -61,7 +61,7 @@ impl AppData {
             //            feedback: None,
             keyboard: None,
             media: Media::from_config(&config),
-            config,
+            _config: config,
             exit: false,
         };
 

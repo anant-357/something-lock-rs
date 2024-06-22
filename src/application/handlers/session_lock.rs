@@ -5,8 +5,9 @@ use smithay_client_toolkit::{
     },
     shm::raw::RawPool,
 };
+use tracing::trace;
 
-use crate::application::{media::MediaType, AppData};
+use crate::application::{media::Media, AppData};
 
 impl SessionLockHandler for AppData {
     fn locked(&mut self, _conn: &Connection, qh: &QueueHandle<Self>, session_lock: SessionLock) {
@@ -44,8 +45,8 @@ impl SessionLockHandler for AppData {
         let mut pool = RawPool::new(width as usize * height as usize * 4, &self.shm).unwrap();
         let canvas = pool.mmap();
         tracing::trace!("Created pool and canvas!");
-        match self.media.base {
-            MediaType::Image(ref mut i) => {
+        match self.media {
+            Media::Image(ref mut i) => {
                 let mut image = i.buffer.clone();
                 if width != image.width() || height != image.height() {
                     image = image::imageops::resize(
@@ -67,6 +68,22 @@ impl SessionLockHandler for AppData {
                 }
 
                 tracing::trace!("Converted pixels!");
+            }
+            Media::Solid(color) => {
+                let a = (color.alpha()) as u32;
+                let r = (color.red()) as u32;
+                let g = (color.green()) as u32;
+                let b = (color.blue()) as u32;
+                tracing::trace!("Rendering Solid Color: ({},{},{},{})", r, g, b, a);
+                canvas
+                    .chunks_exact_mut(4)
+                    .enumerate()
+                    .for_each(|(_index, chunk)| {
+                        let color: u32 = (a << 24) + (r << 16) + (g << 8) + b;
+
+                        let array: &mut [u8; 4] = chunk.try_into().unwrap();
+                        *array = color.to_le_bytes();
+                    });
             }
             _ => {
                 canvas
