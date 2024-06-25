@@ -1,3 +1,5 @@
+use fast_image_resize::{IntoImageView, ResizeOptions, Resizer};
+use image::DynamicImage;
 use smithay_client_toolkit::{
     reexports::client::{protocol::wl_shm, Connection, QueueHandle},
     session_lock::{
@@ -5,7 +7,6 @@ use smithay_client_toolkit::{
     },
     shm::raw::RawPool,
 };
-use tracing::trace;
 
 use crate::application::{media::Media, AppData};
 
@@ -47,19 +48,22 @@ impl SessionLockHandler for AppData {
         tracing::trace!("Created pool and canvas!");
         match self.media {
             Media::Image(ref mut i) => {
-                let mut image = i.buffer.clone();
+                let image = i.buffer.clone();
                 if width != image.width() || height != image.height() {
-                    image = image::imageops::resize(
-                        &image,
-                        width,
-                        height,
-                        image::imageops::FilterType::Nearest,
-                    );
+                    let mut new =
+                        fast_image_resize::images::Image::new(width, height, i.pixel_type);
+                    Resizer::new()
+                        .resize(
+                            &image,
+                            &mut new,
+                            &ResizeOptions::new().resize_alg(fast_image_resize::ResizeAlg::Nearest),
+                        )
+                        .unwrap();
                     i.set_buffer(image.clone());
                     tracing::trace!("Resized image!");
                 }
                 {
-                    for (pixel, argb) in image.pixels().zip(canvas.chunks_exact_mut(4)) {
+                    for (pixel, argb) in image.to_rgba8().pixels().zip(canvas.chunks_exact_mut(4)) {
                         argb[3] = pixel.0[3];
                         argb[2] = pixel.0[0];
                         argb[1] = pixel.0[1];
