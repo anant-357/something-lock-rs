@@ -1,7 +1,7 @@
 use std::{path::PathBuf, process};
 
 use fast_image_resize::{IntoImageView, PixelType, ResizeOptions, Resizer};
-use image::{DynamicImage, RgbaImage};
+use image::{imageops::blur, DynamicImage, RgbaImage};
 use tracing::error;
 
 pub struct Image {
@@ -10,7 +10,7 @@ pub struct Image {
 }
 
 impl Image {
-    pub fn from_path(p: &PathBuf) -> Self {
+    pub fn from_path(p: &PathBuf, blur_size: u32) -> Self {
         let image = match image::open(p.as_path()) {
             Ok(image) => image,
             Err(e) => match p.to_str() {
@@ -47,8 +47,9 @@ impl Image {
             )
             .unwrap();
         let image_buffer = RgbaImage::from_raw(1920, 1080, new.into_vec()).unwrap();
+        let rim = blur(&image_buffer, blur_size as f32);
         Image {
-            buffer: DynamicImage::from(image_buffer),
+            buffer: DynamicImage::from(rim),
             pixel_type: image.pixel_type().unwrap(),
         }
     }

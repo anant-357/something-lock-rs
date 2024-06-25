@@ -443,6 +443,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "fastblur"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8383bbc116936203138cc8fe615c6364790847af8985a4bf579baaa4a86dca2d"
+
+[[package]]
 name = "fdeflate"
 version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1493,6 +1499,7 @@ name = "something-lock-rs"
 version = "0.1.0"
 dependencies = [
  "fast_image_resize",
+ "fastblur",
  "image 0.25.1",
  "libspa",
  "libwayshot",

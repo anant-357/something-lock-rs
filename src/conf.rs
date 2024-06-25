@@ -14,6 +14,7 @@ pub struct Config {
     pub media_type: Option<MediaType>,
     pub media_path: Option<PathBuf>,
     pub color: Option<ColorU8>,
+    pub blur: Option<u32>,
 }
 impl Config {
     pub fn empty() -> Self {
@@ -21,6 +22,7 @@ impl Config {
             media_type: None,
             media_path: None,
             color: None,
+            blur: None,
         }
     }
     pub fn from_config_file() -> Self {
@@ -33,6 +35,13 @@ impl Config {
                     let image_section = conf.section(Some("image")).unwrap();
                     config.media_type = Some(MediaType::Image);
                     config.media_path = Some(PathBuf::from(image_section.get("path").unwrap()));
+                    config.blur = Some(
+                        image_section
+                            .get("blur")
+                            .unwrap()
+                            .parse::<u32>()
+                            .unwrap_or(0),
+                    )
                 }
                 "solid" => {
                     let solid_section = conf.section(Some("solid")).unwrap();
