@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use ini::Ini;
-use tiny_skia::{Color, ColorU8};
+use tiny_skia::ColorU8;
 
 pub enum MediaType {
     Animation,
@@ -14,7 +14,8 @@ pub struct Config {
     pub media_type: Option<MediaType>,
     pub media_path: Option<PathBuf>,
     pub color: Option<ColorU8>,
-    pub blur: Option<u32>,
+    pub blur_size: Option<u32>,
+    pub blur_type: Option<String>,
 }
 impl Config {
     pub fn empty() -> Self {
@@ -22,7 +23,8 @@ impl Config {
             media_type: None,
             media_path: None,
             color: None,
-            blur: None,
+            blur_size: None,
+            blur_type: None,
         }
     }
     pub fn from_config_file() -> Self {
@@ -35,13 +37,16 @@ impl Config {
                     let image_section = conf.section(Some("image")).unwrap();
                     config.media_type = Some(MediaType::Image);
                     config.media_path = Some(PathBuf::from(image_section.get("path").unwrap()));
-                    config.blur = Some(
+                    config.blur_size = Some(
                         image_section
-                            .get("blur")
-                            .unwrap()
+                            .get("blur_size")
+                            .unwrap_or("0")
                             .parse::<u32>()
                             .unwrap_or(0),
-                    )
+                    );
+
+                    config.blur_type =
+                        Some(image_section.get("blur_type").unwrap_or("box").to_string());
                 }
                 "solid" => {
                     let solid_section = conf.section(Some("solid")).unwrap();

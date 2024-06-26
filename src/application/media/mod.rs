@@ -3,7 +3,7 @@ mod video_media;
 
 use crate::conf::{Config, MediaType as CMediaType};
 use image_media::Image;
-use tiny_skia::{Color, ColorU8};
+use tiny_skia::ColorU8;
 use video_media::Video;
 
 pub enum Media {
@@ -18,7 +18,8 @@ impl Media {
         match config.media_type {
             Some(CMediaType::Image) => Media::Image(Image::from_path(
                 &config.media_path.as_ref().unwrap(),
-                config.blur.unwrap_or(0),
+                config.blur_type.clone().unwrap_or("".to_string()),
+                config.blur_size.unwrap_or(0),
             )),
             Some(CMediaType::Solid) => Media::Solid(config.color.unwrap()),
             _ => Media::NA,
