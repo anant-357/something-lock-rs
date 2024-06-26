@@ -1,5 +1,6 @@
-use fast_image_resize::{IntoImageView, ResizeOptions, Resizer};
-use image::DynamicImage;
+use std::iter::zip;
+
+use photon_rs::{native::image_to_bytes, transform::resize};
 use smithay_client_toolkit::{
     reexports::client::{protocol::wl_shm, Connection, QueueHandle},
     session_lock::{
@@ -49,25 +50,25 @@ impl SessionLockHandler for AppData {
         match self.media {
             Media::Image(ref mut i) => {
                 let image = i.buffer.clone();
-                if width != image.width() || height != image.height() {
-                    let mut new =
-                        fast_image_resize::images::Image::new(width, height, i.pixel_type);
-                    Resizer::new()
-                        .resize(
-                            &image,
-                            &mut new,
-                            &ResizeOptions::new().resize_alg(fast_image_resize::ResizeAlg::Nearest),
-                        )
-                        .unwrap();
+                if width != image.get_width() || height != image.get_height() {
+                    resize(
+                        &image,
+                        width,
+                        height,
+                        photon_rs::transform::SamplingFilter::Nearest,
+                    );
                     i.set_buffer(image.clone());
                     tracing::trace!("Resized image!");
                 }
                 {
-                    for (pixel, argb) in image.to_rgba8().pixels().zip(canvas.chunks_exact_mut(4)) {
-                        argb[3] = pixel.0[3];
-                        argb[2] = pixel.0[0];
-                        argb[1] = pixel.0[1];
-                        argb[0] = pixel.0[2];
+                    for (pixel, argb) in image_to_bytes(image)
+                        .chunks_exact(4)
+                        .zip(canvas.chunks_exact_mut(4))
+                    {
+                        argb[3] = pixel[3];
+                        argb[2] = pixel[0];
+                        argb[1] = pixel[1];
+                        argb[0] = pixel[2];
                     }
                 }
 
