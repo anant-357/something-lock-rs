@@ -36,17 +36,14 @@ impl Image {
                 }
             },
         };
-
-        tracing::info!("starting resize");
-        image = transform::resize(&image, 1920, 1080, transform::SamplingFilter::Nearest);
-        tracing::info!("ending resize");
-        tracing::info!("starting blur");
+        if 1920 != image.get_width() || height != image.get_height() {
+            image = transform::resize(&image, 1920, 1080, transform::SamplingFilter::Nearest);
+        }
         match blur_type.as_str() {
             "box" => box_blur(&mut image),
             "gaussian" => gaussian_blur(&mut image, blur_size as i32),
             _ => (),
         }
-        tracing::info!("ending blur");
         Image { buffer: image }
     }
 
