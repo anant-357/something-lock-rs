@@ -1,0 +1,67 @@
+;; -*- mode: emacs-lisp; lexical-binding:t; coding: utf-8-emacs; -*-
+;; --------------------------------------------------------------------------
+;; Desktop File for Emacs
+;; --------------------------------------------------------------------------
+;; Created Fri Aug 23 21:15:30 2024
+;; Desktop file format version 208
+;; Emacs version 29.4
+
+;; Global section:
+(setq desktop-saved-frameset [frameset 1 (26312 44698 808167 916000) (desktop . "208") "fisher@qrxas" nil nil ((((minibuffer . t) (undecorated) (override-redirect) (font . "-SAJA-CaskaydiaCove Nerd Font-regular-normal-normal-*-15-*-*-*-m-0-iso10646-1") (border-width . 0) (internal-border-width . 0) (child-frame-border-width) (right-divider-width . 0) (bottom-divider-width . 0) (vertical-scroll-bars) (horizontal-scroll-bars) (foreground-color . "#3c3836") (background-color . "#fbf1c7") (mouse-color . "black") (border-color . "black") (screen-gamma) (line-spacing) (left-fringe . 8) (right-fringe . 8) (no-special-glyphs) (scroll-bar-foreground) (scroll-bar-background) (menu-bar-lines . 0) (tab-bar-lines . 1) (tool-bar-lines . 0) (title) (wait-for-wm . t) (tool-bar-position . top) (inhibit-double-buffering) (icon-type . t) (auto-raise) (auto-lower) (cursor-type . box) (scroll-bar-width . 16) (scroll-bar-height . 16) (alpha) (alpha-background . 100) (no-focus-on-map) (no-accept-focus) (fullscreen . fullheight) (visibility . t) (skip-taskbar) (z-group) (display-type . color) (background-mode . light) (cursor-color . "#3c3836") (font-parameter . "CaskaydiaCove Nerd Font-11") (sticky) (environment) (tabs (current-tab (name . "media") (explicit-name))) (last-focus-update . t) (frameset--id . "8E2B-BD30-B5C9-E423") (frameset--mini t . t) (height . 57) (width . 211) (modeline . t) (unsplittable) (left . 0) (top . 0) (icon-name) (display . "wayland-1") (explicit-name)) ((min-height . 4) (min-width . 20) (min-height-ignore . 2) (min-width-ignore . 8) (min-height-safe . 1) (min-width-safe . 4) (min-pixel-height . 72) (min-pixel-width . 180) (min-pixel-height-ignore . 36) (min-pixel-width-ignore . 72) (min-pixel-height-safe . 18) (min-pixel-width-safe . 36)) hc (pixel-width . 1918) (pixel-height . 1018) (total-width . 213) (total-height . 56) (normal-height . 1.0) (normal-width . 1.0) (combination-limit) (leaf (pixel-width . 955) (pixel-height . 1018) (total-width . 106) (total-height . 56) (normal-height . 1.0) (normal-width . 0.5) (buffer "image_media.rs" (selected) (hscroll . 0) (fringes 8 8 nil nil) (margins nil) (scroll-bars nil 0 t nil 0 t nil) (vscroll . 0) (dedicated) (point . 1630) (start . 1)) (prev-buffers ("image_media.rs" 1 1274) ("media" 1 215) ("src" 1 197) ("something-lock-rs" 1 661) ("*scratch*" 1 146))) (leaf (last . t) (pixel-width . 963) (pixel-height . 1018) (total-width . 107) (total-height . 56) (normal-height . 1.0) (normal-width . 0.5) (buffer "media" (selected . t) (hscroll . 0) (fringes 8 8 nil nil) (margins nil) (scroll-bars nil 0 t nil 0 t nil) (vscroll . 0) (dedicated) (point . 165) (start . 1)) (prev-buffers ("media" 1 165) ("src" 1 197) ("something-lock-rs" 1 661)))))])
+(setq desktop-missing-file-warning nil)
+(setq tags-file-name nil)
+(setq tags-table-list nil)
+(setq search-ring nil)
+(setq regexp-search-ring nil)
+(setq register-alist nil)
+(setq file-name-history '("/home/fisher/dev/wayland/something-lock-rs/src/application/media" "~/dev/wayland/something-lock-rs/" "~/.config/rofi/config.rasi" "~/.config/rofi/current.rasi" "~/.config/rofi/config.rasi" "~/.config/rofi/theme.rasi" "~/.config/rofi/config.rasi" "~/.config/rofi/theme.rasi" "~/dev/dotfiles-wayland/niri/.config/niri/config.kdl" "~/.config/yofi/yofi.config" "~/.config/rofi/config.rasi" "~/dev/dotfiles-wayland/"))
+
+;; Buffer section -- buffers listed in same order as in buffer list:
+(desktop-create-buffer 208
+  "/home/fisher/dev/wayland/something-lock-rs/src/application/media/image_media.rs"
+  "image_media.rs"
+  'rust-mode
+  '(font-lock-mode display-line-numbers-mode ligature-mode)
+  1630
+  '(1450 nil)
+  nil
+  nil
+  '((buffer-display-time 26312 44691 64686 824000) (buffer-file-coding-system . undecided-unix))
+  '((mark-ring (1346 1450 1274 1274))))
+
+(desktop-create-buffer 208
+  nil
+  "media"
+  'dired-mode
+  '(font-lock-mode display-line-numbers-mode ligature-mode nerd-icons-dired-mode)
+  165
+  '(nil nil)
+  t
+  '("/home/fisher/dev/wayland/something-lock-rs/src/application/media/")
+  '((tab-width . 1) (buffer-display-time 26312 44693 199367 60000))
+  '((mark-ring nil)))
+
+(desktop-create-buffer 208
+  nil
+  "src"
+  'dired-mode
+  '(font-lock-mode display-line-numbers-mode ligature-mode nerd-icons-dired-mode)
+  197
+  '(nil nil)
+  t
+  '("/home/fisher/dev/wayland/something-lock-rs/src/")
+  '((tab-width . 1) (buffer-display-time 26312 33889 39390 738000))
+  '((mark-ring nil)))
+
+(desktop-create-buffer 208
+  nil
+  "something-lock-rs"
+  'dired-mode
+  '(font-lock-mode display-line-numbers-mode ligature-mode nerd-icons-dired-mode)
+  661
+  '(720 nil)
+  t
+  '("/home/fisher/dev/wayland/something-lock-rs/")
+  '((tab-width . 1) (buffer-display-time 26312 33885 904617 750000))
+  '((mark-ring (609 664))))
+

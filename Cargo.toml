@@ -17,5 +17,8 @@ pipewire = "0.8.0"
 libspa = "0.8.0"
 tiny-skia = "0.11.4"
 libwayshot = "0.3.0"
-photon-rs = "0.3.2"
+winit = { version = "0.30.5", default-features = false, features = ["wayland", "rwh_06"] }
+wgpu = { version = "22.1.0", default-features = false, features = ["wgsl"] }
+futures = "0.3.30"
+raw-window-handle = "0.6.2"
 

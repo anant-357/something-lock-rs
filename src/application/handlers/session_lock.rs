@@ -1,23 +1,42 @@
-use std::iter::zip;
-
-use photon_rs::{native::image_to_bytes, transform::resize};
+use futures::executor;
 use smithay_client_toolkit::{
-    reexports::client::{protocol::wl_shm, Connection, QueueHandle},
+    reexports::client::{ Connection, Proxy, QueueHandle},
     session_lock::{
         SessionLock, SessionLockHandler, SessionLockSurface, SessionLockSurfaceConfigure,
-    },
-    shm::raw::RawPool,
+    }
 };
+use std::ptr::NonNull;
+use raw_window_handle::{WaylandDisplayHandle, WaylandWindowHandle};
 
-use crate::application::{media::Media, AppData};
+use crate::application::{graphics::Graphics,  AppData};
 
 impl SessionLockHandler for AppData {
-    fn locked(&mut self, _conn: &Connection, qh: &QueueHandle<Self>, session_lock: SessionLock) {
+    fn locked(&mut self, conn: &Connection, qh: &QueueHandle<Self>, session_lock: SessionLock) {
         println!("Locked");
 
         for output in self.output_state.outputs() {
             let surface = self.compositor_state.create_surface(&qh);
+            //let window = self.xdg_state.create_window(surface, smithay_client_toolkit::shell::xdg::window::WindowDecorations::None, qh);
+            //window.commit();
             let lock_surface = session_lock.create_lock_surface(surface, &output, qh);
+            let raw_display_handle =
+                    raw_window_handle::RawDisplayHandle::Wayland(WaylandDisplayHandle::new(
+                        NonNull::new(conn.backend().display_ptr() as *mut _).unwrap(),
+                    ));
+                let raw_window_handle =
+                    raw_window_handle::RawWindowHandle::Wayland(WaylandWindowHandle::new(
+                        NonNull::new(lock_surface.wl_surface().id().as_ptr() as *mut _).unwrap(),
+                    ));
+
+                self.graphics_state = Some(executor::block_on(Graphics::new(
+                    wgpu::SurfaceTargetUnsafe::RawHandle {
+                        raw_window_handle,
+                        raw_display_handle,
+                    },
+                    1920,
+                    1080,
+                )));
+
             self.loop_handle.insert_idle(|app_data| {
                 app_data.lock_data.add_surface(lock_surface);
             });
@@ -42,92 +61,10 @@ impl SessionLockHandler for AppData {
         configure: SessionLockSurfaceConfigure,
         _serial: u32,
     ) {
-        tracing::trace!("Starting SessionLockSurface configure");
         let (width, height) = configure.new_size;
-        let mut pool = RawPool::new(width as usize * height as usize * 4, &self.shm).unwrap();
-        let canvas = pool.mmap();
-        tracing::trace!("Created pool and canvas!");
-        match self.media {
-            Media::Image(ref mut i) => {
-                let image = i.buffer.clone();
-                if width != image.get_width() || height != image.get_height() {
-                    resize(
-                        &image,
-                        width,
-                        height,
-                        photon_rs::transform::SamplingFilter::Nearest,
-                    );
-                    i.set_buffer(image.clone());
-                    tracing::trace!("Resized image!");
-                }
-                {
-                    for (pixel, argb) in image_to_bytes(image)
-                        .chunks_exact(4)
-                        .zip(canvas.chunks_exact_mut(4))
-                    {
-                        argb[3] = pixel[3];
-                        argb[2] = pixel[0];
-                        argb[1] = pixel[1];
-                        argb[0] = pixel[2];
-                    }
-                }
-
-                tracing::trace!("Converted pixels!");
-            }
-            Media::Solid(color) => {
-                let a = (color.alpha()) as u32;
-                let r = (color.red()) as u32;
-                let g = (color.green()) as u32;
-                let b = (color.blue()) as u32;
-                tracing::trace!("Rendering Solid Color: ({},{},{},{})", r, g, b, a);
-                canvas
-                    .chunks_exact_mut(4)
-                    .enumerate()
-                    .for_each(|(_index, chunk)| {
-                        let color: u32 = (a << 24) + (r << 16) + (g << 8) + b;
-
-                        let array: &mut [u8; 4] = chunk.try_into().unwrap();
-                        *array = color.to_le_bytes();
-                    });
-            }
-            _ => {
-                canvas
-                    .chunks_exact_mut(4)
-                    .enumerate()
-                    .for_each(|(index, chunk)| {
-                        let x = (index % width as usize) as u32;
-                        let y = (index / width as usize) as u32;
-
-                        let a = 0xFF;
-                        let r =
-                            u32::min(((width - x) * 0xFF) / width, ((height - y) * 0xFF) / height);
-                        let g = u32::min((x * 0xFF) / width, ((height - y) * 0xFF) / height);
-                        let b = u32::min(((width - x) * 0xFF) / width, (y * 0xFF) / height);
-                        let color = (a << 24) + (r << 16) + (g << 8) + b;
-
-                        let array: &mut [u8; 4] = chunk.try_into().unwrap();
-                        *array = color.to_le_bytes();
-                    });
-            }
-        };
-
-        let buffer = pool.create_buffer(
-            0,
-            width as i32,
-            height as i32,
-            width as i32 * 4,
-            wl_shm::Format::Argb8888,
-            (),
-            qh,
-        );
-
-        session_lock_surface
-            .wl_surface()
-            .attach(Some(&buffer), 0, 0);
+        self.graphics_state.as_mut().unwrap().resize(width, height);
+        self.graphics_state.as_ref().unwrap().render().unwrap();
         session_lock_surface.wl_surface().commit();
-        tracing::trace!("Buffer Attatched!");
-
-        buffer.destroy();
     }
 }
 smithay_client_toolkit::delegate_session_lock!(AppData);

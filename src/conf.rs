@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use ini::Ini;
-use tiny_skia::ColorU8;
+use wgpu::Color;
 
 pub enum MediaType {
     Animation,
@@ -13,7 +13,7 @@ pub enum MediaType {
 pub struct Config {
     pub media_type: Option<MediaType>,
     pub media_path: Option<PathBuf>,
-    pub color: Option<ColorU8>,
+    pub color: Option<Color>,
     pub blur_size: Option<u32>,
     pub blur_type: Option<String>,
 }
@@ -51,18 +51,18 @@ impl Config {
                 "solid" => {
                     let solid_section = conf.section(Some("solid")).unwrap();
                     config.media_type = Some(MediaType::Solid);
-                    let red = solid_section.get("red").unwrap().parse::<u8>().unwrap();
-                    let green = solid_section.get("green").unwrap().parse::<u8>().unwrap();
-                    let blue = solid_section.get("blue").unwrap().parse::<u8>().unwrap();
-                    let alpha = solid_section.get("alpha").unwrap().parse::<u8>().unwrap();
+                    let r = solid_section.get("red").unwrap().parse::<f64>().unwrap();
+                    let g = solid_section.get("green").unwrap().parse::<f64>().unwrap();
+                    let b = solid_section.get("blue").unwrap().parse::<f64>().unwrap();
+                    let a = solid_section.get("alpha").unwrap().parse::<f64>().unwrap();
                     tracing::trace!(
                         "Solid Type: Color is (rgba) ({}, {}, {}, {})",
-                        red,
-                        green,
-                        blue,
-                        alpha
+                        r,
+                        g,
+                        b,
+                        a
                     );
-                    config.color = Some(ColorU8::from_rgba(red, green, blue, alpha));
+                    config.color = Some(Color{ r, g, b, a });
                 }
                 "video" => {}
                 "animation" => {}
