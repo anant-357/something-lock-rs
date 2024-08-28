@@ -9,18 +9,17 @@ use smithay_client_toolkit::{
     },
 };
 
-use crate::application::{
-    graphics::{GContext, GSurfaceWrapper}, media::Media, AppData
-};
+use crate::{graphics::{GContext, GSurfaceWrapper}, media::Media, AppData};
 
 impl SessionLockHandler for AppData {
     fn locked(&mut self, conn: &Connection, qh: &QueueHandle<Self>, session_lock: SessionLock) {
         tracing::trace!("Locked");
-        for output in self.output_state.outputs() {
-            let output_info = self.output_state.info(&output).unwrap();
+        for output in self.states.output_state.outputs() {
+            let output_info = self.states.output_state.info(&output).unwrap();
             let size = output_info.logical_size.unwrap();
-            let surface = self.compositor_state.create_surface(&qh);
+            let surface = self.states.compositor_state.create_surface(&qh);
             let lock_surface = session_lock.create_lock_surface(surface, &output, qh);
+
             let raw_display_handle =
                 raw_window_handle::RawDisplayHandle::Wayland(WaylandDisplayHandle::new(
                     NonNull::new(conn.backend().display_ptr() as *mut _).unwrap(),
@@ -35,6 +34,7 @@ impl SessionLockHandler for AppData {
                 raw_display_handle,
             };
             let mut gcontext = GContext::new();
+
             let vsurface = unsafe {
                 gcontext
                     .instance

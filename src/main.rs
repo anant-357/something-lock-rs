@@ -1,8 +1,12 @@
-mod application;
+mod app;
 mod conf;
+mod graphics;
+mod handlers;
+mod lock_data;
+mod media;
 mod pam;
 
-use application::AppData;
+use app::AppData;
 use conf::Config;
 use std::io;
 use tracing::Level;
@@ -17,6 +21,7 @@ fn initialize_tracing() {
 
 fn main() {
     initialize_tracing();
-    let config = Config::from_config_file();
-    AppData::connect(config);
+    let xdg_dirs = xdg::BaseDirectories::with_prefix("something_lock").unwrap();
+    let config = Config::from_config_file(xdg_dirs.clone());
+    AppData::connect(config, xdg_dirs);
 }

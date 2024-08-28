@@ -3,7 +3,7 @@ use smithay_client_toolkit::{
     seat::{Capability, SeatHandler, SeatState},
 };
 
-use crate::application::AppData;
+use crate::app::AppData;
 
 impl SeatHandler for AppData {
     fn new_seat(
@@ -16,7 +16,7 @@ impl SeatHandler for AppData {
     }
 
     fn seat_state(&mut self) -> &mut SeatState {
-        &mut self.seat_state
+        &mut self.states.seat_state
     }
 
     fn new_capability(
@@ -29,7 +29,7 @@ impl SeatHandler for AppData {
         if capability == Capability::Keyboard && self.keyboard.is_none() {
             tracing::trace!("Adding keyboard!");
             self.keyboard = Some(
-                self.seat_state
+                self.states.seat_state
                     .get_keyboard(&qh, &seat, None)
                     .expect("Failed to create keyboard!"),
             )

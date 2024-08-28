@@ -4,11 +4,11 @@ use smithay_client_toolkit::{
     registry_handlers,
 };
 
-use crate::application::AppData;
+use crate::app::AppData;
 
 impl ProvidesRegistryState for AppData {
     fn registry(&mut self) -> &mut RegistryState {
-        &mut self.registry_state
+        &mut self.states.registry_state
     }
     registry_handlers![OutputState,];
 }

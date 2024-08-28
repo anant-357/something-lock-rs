@@ -1,20 +1,13 @@
-use libwayshot::reexport::WlOutput;
 use smithay_client_toolkit::{
     output::{OutputHandler, OutputState},
     reexports::client::{protocol::wl_output, Connection, QueueHandle},
 };
 
-use crate::application::AppData;
-
-#[derive(Debug)]
-pub struct IOutputInfo {
-    pub position: (u32, u32),
-    pub size: (u32, u32),
-}
+use crate::app::AppData;
 
 impl OutputHandler for AppData {
     fn output_state(&mut self) -> &mut OutputState {
-        &mut self.output_state
+        &mut self.states.output_state
     }
 
     fn new_output(
@@ -23,8 +16,7 @@ impl OutputHandler for AppData {
         _qh: &QueueHandle<Self>,
         output: wl_output::WlOutput,
     ) {
-        let output_info = self.output_state.info(&output).unwrap();
-        let size = output_info.logical_size.unwrap();
+        let output_info = self.states.output_state.info(&output).unwrap();
         tracing::trace!("New Output {:#?}", output_info);
     }
 
