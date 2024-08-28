@@ -1,10 +1,9 @@
-//mod drm;
 mod graphics;
 mod handlers;
 mod lock_data;
 mod media;
 
-use graphics::Graphics;
+use graphics::{GContext, GSurfaceWrapper};
 use lock_data::LockData;
 use media::Media;
 use smithay_client_toolkit::{
@@ -24,6 +23,7 @@ use smithay_client_toolkit::{
 
 use crate::conf::Config;
 
+
 pub struct AppData {
     pub conn: Connection,
     pub loop_handle: LoopHandle<'static, Self>,
@@ -31,10 +31,11 @@ pub struct AppData {
     pub registry_state: RegistryState,
     pub output_state: OutputState,
     pub seat_state: SeatState,
-    pub graphics_state: Option<Graphics>,
+    pub graphics_context: Option<GContext>,
     pub keyboard: Option<WlKeyboard>,
     pub lock_data: LockData,
-    pub _media: Media,
+    pub gsurfaces: Vec<GSurfaceWrapper>,
+    pub media: Media,
     pub _config: Config,
     pub exit: bool,
 }
@@ -55,13 +56,14 @@ impl AppData {
             registry_state: RegistryState::new(&globals),
             lock_data: LockData::from_state(SessionLockState::new(&globals, &qh)),
             seat_state: SeatState::new(&globals, &qh),
-            graphics_state: None,
+            graphics_context: None,
+            gsurfaces: Vec::new(),
             keyboard: None,
-            _media: Media::from_config(&config),
+            media: Media::from_config(&config),
             _config: config,
             exit: false,
         };
-
+        
         app_data.lock_data.lock(&qh);
         loop {
             event_queue.blocking_dispatch(&mut app_data).unwrap();

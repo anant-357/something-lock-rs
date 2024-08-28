@@ -51,18 +51,23 @@ impl Config {
                 "solid" => {
                     let solid_section = conf.section(Some("solid")).unwrap();
                     config.media_type = Some(MediaType::Solid);
-                    let r = solid_section.get("red").unwrap().parse::<f64>().unwrap();
-                    let g = solid_section.get("green").unwrap().parse::<f64>().unwrap();
-                    let b = solid_section.get("blue").unwrap().parse::<f64>().unwrap();
-                    let a = solid_section.get("alpha").unwrap().parse::<f64>().unwrap();
+                    let r = solid_section.get("red").unwrap().parse::<u32>().unwrap();
+                    let g = solid_section.get("green").unwrap().parse::<u32>().unwrap();
+                    let b = solid_section.get("blue").unwrap().parse::<u32>().unwrap();
+                    let a = solid_section.get("alpha").unwrap().parse::<u32>().unwrap();
                     tracing::trace!(
                         "Solid Type: Color is (rgba) ({}, {}, {}, {})",
-                        r,
-                        g,
-                        b,
+                        r / 255,
+                        g / 255,
+                        b / 255,
                         a
                     );
-                    config.color = Some(Color{ r, g, b, a });
+                    config.color = Some(Color {
+                        r: (r / 255) as f64,
+                        g: (g / 255) as f64,
+                        b: (b / 255) as f64,
+                        a: (a / 255) as f64,
+                    });
                 }
                 "video" => {}
                 "animation" => {}

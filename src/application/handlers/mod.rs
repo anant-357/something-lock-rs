@@ -1,6 +1,6 @@
 mod compositor;
 mod keyboard;
-mod output;
+pub mod output;
 mod registry;
 mod seat;
 mod session_lock;

@@ -1,42 +1,50 @@
+use std::ptr::NonNull;
+
 use futures::executor;
+use raw_window_handle::{WaylandDisplayHandle, WaylandWindowHandle};
 use smithay_client_toolkit::{
-    reexports::client::{ Connection, Proxy, QueueHandle},
+    reexports::client::{Connection, Proxy, QueueHandle},
     session_lock::{
         SessionLock, SessionLockHandler, SessionLockSurface, SessionLockSurfaceConfigure,
-    }
+    },
 };
-use std::ptr::NonNull;
-use raw_window_handle::{WaylandDisplayHandle, WaylandWindowHandle};
 
-use crate::application::{graphics::Graphics,  AppData};
+use crate::application::{
+    graphics::{GContext, GSurfaceWrapper}, media::Media, AppData
+};
 
 impl SessionLockHandler for AppData {
     fn locked(&mut self, conn: &Connection, qh: &QueueHandle<Self>, session_lock: SessionLock) {
-        println!("Locked");
-
+        tracing::trace!("Locked");
         for output in self.output_state.outputs() {
+            let output_info = self.output_state.info(&output).unwrap();
+            let size = output_info.logical_size.unwrap();
             let surface = self.compositor_state.create_surface(&qh);
-            //let window = self.xdg_state.create_window(surface, smithay_client_toolkit::shell::xdg::window::WindowDecorations::None, qh);
-            //window.commit();
             let lock_surface = session_lock.create_lock_surface(surface, &output, qh);
             let raw_display_handle =
-                    raw_window_handle::RawDisplayHandle::Wayland(WaylandDisplayHandle::new(
-                        NonNull::new(conn.backend().display_ptr() as *mut _).unwrap(),
-                    ));
-                let raw_window_handle =
-                    raw_window_handle::RawWindowHandle::Wayland(WaylandWindowHandle::new(
-                        NonNull::new(lock_surface.wl_surface().id().as_ptr() as *mut _).unwrap(),
-                    ));
-
-                self.graphics_state = Some(executor::block_on(Graphics::new(
-                    wgpu::SurfaceTargetUnsafe::RawHandle {
-                        raw_window_handle,
-                        raw_display_handle,
-                    },
-                    1920,
-                    1080,
-                )));
-
+                raw_window_handle::RawDisplayHandle::Wayland(WaylandDisplayHandle::new(
+                    NonNull::new(conn.backend().display_ptr() as *mut _).unwrap(),
+                ));
+            let raw_window_handle =
+                raw_window_handle::RawWindowHandle::Wayland(WaylandWindowHandle::new(
+                    NonNull::new(lock_surface.wl_surface().id().as_ptr() as *mut _).unwrap(),
+                ));
+            let mut gsurface = GSurfaceWrapper::new();
+            let surface_target = wgpu::SurfaceTargetUnsafe::RawHandle {
+                raw_window_handle,
+                raw_display_handle,
+            };
+            let mut gcontext = GContext::new();
+            let vsurface = unsafe {
+                gcontext
+                    .instance
+                    .create_surface_unsafe(surface_target)
+                    .unwrap()
+            };
+            executor::block_on(gcontext.init(Some(&vsurface)));
+            gsurface.init(&gcontext, vsurface, (size.0 as u32, size.1 as u32));
+            self.graphics_context = Some(gcontext);
+            self.gsurfaces.push(gsurface);
             self.loop_handle.insert_idle(|app_data| {
                 app_data.lock_data.add_surface(lock_surface);
             });
@@ -56,14 +64,23 @@ impl SessionLockHandler for AppData {
     fn configure(
         &mut self,
         _conn: &Connection,
-        qh: &QueueHandle<Self>,
+        _qh: &QueueHandle<Self>,
         session_lock_surface: SessionLockSurface,
         configure: SessionLockSurfaceConfigure,
         _serial: u32,
     ) {
+        tracing::trace!("Configure Event");
         let (width, height) = configure.new_size;
-        self.graphics_state.as_mut().unwrap().resize(width, height);
-        self.graphics_state.as_ref().unwrap().render().unwrap();
+        let gcontext = self.graphics_context.as_ref().unwrap();
+        let surface = self.gsurfaces.get_mut(0).unwrap();
+        surface.resize(gcontext, (width, height));
+        match self.media {
+            Media::Solid(color) => {
+                gcontext.render_color(&surface,color ).unwrap();
+            }
+                _ => {tracing::trace!("Image, Video not supported yet!");}
+        }
+       
         session_lock_surface.wl_surface().commit();
     }
 }

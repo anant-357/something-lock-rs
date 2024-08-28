@@ -1,110 +1,126 @@
-
 use wgpu::{
-    Adapter, Device, Instance, PresentMode, Queue, Surface, SurfaceCapabilities,
-    SurfaceConfiguration, SurfaceTargetUnsafe,
+    Adapter, Device, DeviceDescriptor, Instance, InstanceDescriptor, InstanceFlags, Queue,
+    RequestAdapterOptions, Surface, SurfaceConfiguration,
 };
 
-pub struct Graphics {
-    surface: Surface<'static>,
-    device: Device,
-    queue: Queue,
-    config: SurfaceConfiguration,
-    width: u32,
-    height: u32,
+pub struct GSurfaceWrapper {
+    surface: Option<Surface<'static>>,
+    config: Option<SurfaceConfiguration>,
 }
 
-impl Graphics {
-    pub async fn new(surface_target: SurfaceTargetUnsafe, width: u32, height: u32) -> Self {
-        
-        let instance = Self::create_gpu_instance();
-        let surface = unsafe {
-            instance
-                .create_surface_unsafe(surface_target)
-                .unwrap()
-        };
-        let adapter = Self::create_adapter(instance, &surface).await;
-        let (device, queue) = Self::create_device(&adapter).await;
-        let surface_caps = surface.get_capabilities(&adapter);
-        let config = Self::create_surface_config(surface_caps, width, height);
-        surface.configure(&device, &config);
-
+impl GSurfaceWrapper {
+    pub fn new() -> Self {
         Self {
-            surface,
-            device,
-            queue,
-            config,
-            width,
-            height,
+            surface: None,
+            config: None,
+        }
+    }
+    pub fn init(
+        &mut self,
+        gcontext: &GContext,
+        surface_target: Surface<'static>,
+        size: (u32, u32),
+    ) {
+        self.surface = Some(surface_target);
+        let surface = self.surface.as_ref().unwrap();
+
+        let config = surface
+            .get_default_config(&gcontext.adapter(), size.0, size.1)
+            .expect("Surface is not supported by the adapter");
+        surface.configure(&gcontext.device(), &config);
+        self.config = Some(config);
+    }
+
+    pub fn resize(&mut self, gcontext: &GContext, size: (u32, u32)) {
+        let config = self.config.as_mut().unwrap();
+        config.width = size.0;
+        config.height = size.1;
+        let surface = self.surface.as_ref().unwrap();
+        surface.configure(&gcontext.device(), config);
+    }
+
+    fn get(&self) -> Option<&Surface> {
+        self.surface.as_ref()
+    }
+
+    fn config(&self) -> &SurfaceConfiguration {
+        self.config.as_ref().unwrap()
+    }
+}
+
+pub struct GContext {
+    pub instance: Instance,
+    adapter: Option<Adapter>,
+    device: Option<Device>,
+    queue: Option<Queue>,
+}
+
+impl GContext {
+    pub fn adapter(&self) -> &Adapter {
+        self.adapter.as_ref().unwrap()
+    }
+
+    pub fn device(&self) -> &Device {
+        self.device.as_ref().unwrap()
+    }
+
+    pub fn queue(&self) -> &Queue {
+        self.queue.as_ref().unwrap()
+    }
+    
+    pub fn new() -> Self {
+        let dx12_shader_compiler = wgpu::util::dx12_shader_compiler_from_env().unwrap_or_default();
+        let gles_minor_version = wgpu::util::gles_minor_version_from_env().unwrap_or_default();
+        let instance = Instance::new(InstanceDescriptor {
+            backends: wgpu::Backends::GL,
+            flags: InstanceFlags::VALIDATION,
+            dx12_shader_compiler,
+            gles_minor_version,
+        });
+        Self {
+            instance,
+            adapter: None,
+            device: None,
+            queue: None,
         }
     }
 
-    fn create_gpu_instance() -> Instance {
-        Instance::new(wgpu::InstanceDescriptor {
-            backends: wgpu::Backends::PRIMARY,
-            ..Default::default()
-        })
-    }
-
-    async fn create_adapter(instance: Instance, surface: &Surface<'static>) -> Adapter {
-        instance
-            .request_adapter(&wgpu::RequestAdapterOptions {
-                power_preference: wgpu::PowerPreference::default(),
-                compatible_surface: Some(&surface),
+    pub async fn init(&mut self, compatible_surface: Option<&Surface<'_>>) {
+        let adapter = self.instance
+            .request_adapter(&RequestAdapterOptions {
+                power_preference: wgpu::PowerPreference::LowPower,
                 force_fallback_adapter: false,
+                compatible_surface,
             })
             .await
-            .unwrap()
-    }
+            .expect("No suitable GPU adapters found on the system!");
 
-    async fn create_device(adapter: &Adapter) -> (Device, Queue) {
-        adapter
+        let (device, queue) = adapter
             .request_device(
-                &wgpu::DeviceDescriptor {
-                    required_features: wgpu::Features::empty(),
-                    required_limits: wgpu::Limits::default(),
+                &DeviceDescriptor {
                     label: None,
-                    memory_hints: wgpu::MemoryHints::Performance,
+                    required_features: wgpu::Features::empty(),
+                    required_limits: wgpu::Limits::downlevel_webgl2_defaults(),
+                    memory_hints: wgpu::MemoryHints::MemoryUsage,
                 },
                 None,
             )
             .await
-            .unwrap()
+            .expect("Unable to find a suitable GPU adapter");
+
+        self.adapter = Some(adapter);
+        self.device = Some(device);
+        self.queue = Some(queue);
     }
 
-    fn create_surface_config(
-        surface_caps: SurfaceCapabilities,
-        width: u32,
-        height: u32,
-    ) -> SurfaceConfiguration {
-        let surface_format = surface_caps
-            .formats
-            .iter()
-            .find(|f| f.is_srgb())
-            .copied()
-            .unwrap_or(surface_caps.formats[0]);
-        SurfaceConfiguration {
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-            format: surface_format,
-            width,
-            height,
-            present_mode: PresentMode::AutoNoVsync,
-            alpha_mode: surface_caps.alpha_modes[0],
-            view_formats: vec![],
-            desired_maximum_frame_latency: 2,
-        }
-    }
-
-    pub fn surface(&self) -> &Surface {
-        &self.surface
-    }
-
-    pub fn render(&self) -> Result<(), wgpu::SurfaceError> {
-        let output = self.surface.get_current_texture().unwrap();
+    pub fn render_color(&self, surface: &GSurfaceWrapper, color: wgpu::Color) -> Result<(), wgpu::SurfaceError> {
+        let output = surface.get().unwrap().get_current_texture().unwrap();
+        let device = self.device.as_ref().unwrap();
+        let queue = self.queue.as_ref().unwrap();
         let view = output
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
-        let mut encoder = self
-            .device
+        let mut encoder =            device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
                 label: Some("Render Encoder"),
             });
@@ -116,12 +132,7 @@ impl Graphics {
                     view: &view,
                     resolve_target: None,
                     ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 1.0,
-                            g: 0.2,
-                            b: 0.3,
-                            a: 1.0,
-                        }),
+                        load: wgpu::LoadOp::Clear(color),
                         store: wgpu::StoreOp::Store,
                     },
                 })],
@@ -131,17 +142,10 @@ impl Graphics {
             });
         }
 
-        self.queue.submit(std::iter::once(encoder.finish()));
+        queue.submit(std::iter::once(encoder.finish()));
 
         output.present();
-        Ok({})
-    }
 
-    pub fn resize(&mut self, width: u32, height: u32) {
-        self.width = width;
-        self.height = height;
-        self.config.width = width;
-        self.config.height = height;
-        self.surface.configure(&self.device, &self.config);
+        Ok({})
     }
 }

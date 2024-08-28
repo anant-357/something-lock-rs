@@ -6,8 +6,8 @@ use crate::AppData;
 
 pub struct LockData {
     session_lock: Option<SessionLock>,
-    lock_surfaces: Vec<SessionLockSurface>,
     session_lock_state: SessionLockState,
+    lock_surfaces: Vec<SessionLockSurface>,
     retries: usize,
     pub password_buffer: String,
 }
@@ -16,23 +16,24 @@ impl LockData {
     pub fn from_state(session_lock_state: SessionLockState) -> Self {
         LockData {
             session_lock: None,
-            lock_surfaces: Vec::new(),
             retries: 0,
             password_buffer: String::new(),
             session_lock_state,
+            lock_surfaces: Vec::new(),
         }
     }
 
+    pub fn add_surface(&mut self, lock_surface: SessionLockSurface) {
+        self.lock_surfaces.push(lock_surface);
+    }
+
     pub fn lock(&mut self, qh: &QueueHandle<AppData>) {
+        tracing::trace!("Starting Locking process");
         self.session_lock = Some(
             self.session_lock_state
                 .lock(&qh)
                 .expect("ext-session-lock not supported!"),
         )
-    }
-
-    pub fn add_surface(&mut self, surface: SessionLockSurface) {
-        self.lock_surfaces.push(surface);
     }
 
     pub fn unlock_with_auth(&mut self) -> Result<(), &str> {
