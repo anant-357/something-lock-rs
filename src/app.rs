@@ -1,5 +1,5 @@
-use crate::graphics::{GContext, GSurfaceWrapper};
-use crate::lock_data::LockData;
+use crate::graphics::Graphics;
+use crate::lock::LockState;
 use crate::media::Media;
 use smithay_client_toolkit::{
     compositor::CompositorState,
@@ -15,26 +15,27 @@ use smithay_client_toolkit::{
     seat::SeatState,
     session_lock::SessionLockState,
 };
+use wayland_client::protocol::wl_compositor;
 use xdg::BaseDirectories;
 
-use crate::conf::Config;
+use crate::config::Config;
 
-pub struct States {
+pub struct Wayland {
+    pub conn: Connection,
+    pub compositor: Option<wl_compositor::WlCompositor>,
     pub compositor_state: CompositorState,
     pub registry_state: RegistryState,
     pub output_state: OutputState,
     pub seat_state: SeatState,
+    pub keyboard: Option<WlKeyboard>,
 }
 
 pub struct AppData {
     pub xdg: BaseDirectories,
-    pub conn: Connection,
     pub loop_handle: LoopHandle<'static, Self>,
-    pub states: States,
-    pub graphics_context: Option<GContext>,
-    pub keyboard: Option<WlKeyboard>,
-    pub lock_data: LockData,
-    pub gsurfaces: Vec<GSurfaceWrapper>,
+    pub wayland: Wayland,
+    pub graphics_context: Graphics,
+    pub lock_data: LockState,
     pub media: Media,
     pub _config: Config,
     pub exit: bool,
@@ -50,24 +51,28 @@ impl AppData {
             CEventLoop::try_new().expect("Failed to initialize the event loop!");
         let mut app_data = AppData {
             xdg: base,
-            conn: conn.clone(),
             loop_handle: event_loop.handle(),
-            states: States {
+            wayland: Wayland {
+                conn: conn.clone(),
+                compositor: None,
                 compositor_state: CompositorState::bind(&globals, &qh).unwrap(),
                 registry_state: RegistryState::new(&globals),
                 output_state: OutputState::new(&globals, &qh),
                 seat_state: SeatState::new(&globals, &qh),
+                keyboard: None,
             },
-            graphics_context: None,
-            keyboard: None,
-            lock_data: LockData::from_state(SessionLockState::new(&globals, &qh)),
-            gsurfaces: Vec::new(),
+            graphics_context: Graphics::new(),
+            lock_data: LockState::from_lock(
+                SessionLockState::new(&globals, &qh)
+                    .lock(&qh)
+                    .expect("ext-session-lock not supported"),
+            ),
             media: Media::from_config(&config),
             _config: config,
             exit: false,
         };
-
-        app_data.lock_data.lock(&qh);
+        tracing::trace!("Initiating lock");
+        conn.roundtrip().unwrap();
         loop {
             event_queue.blocking_dispatch(&mut app_data).unwrap();
 

@@ -30,43 +30,33 @@ impl KeyboardHandler for AppData {
 
     fn press_key(
         &mut self,
-        _conn: &Connection,
+        conn: &Connection,
         _qh: &QueueHandle<Self>,
         _keyboard: &smithay_client_toolkit::reexports::client::protocol::wl_keyboard::WlKeyboard,
         _serial: u32,
         event: smithay_client_toolkit::seat::keyboard::KeyEvent,
     ) {
-        tracing::trace!(
-            "Entering Key press: {event:?}, password_buffer: {}",
-            self.lock_data.password_buffer
-        );
         match event.keysym {
             Keysym::Return => {
                 match self.lock_data.unlock_with_auth() {
                     Ok(_) => {
-                        tracing::trace!("Authenticated, unlocked!");
+                        tracing::trace!("Authenticated, unlocked!")
                     }
                     Err(e) => tracing::warn!("{e}"),
-                }
+                };
+                conn.roundtrip().unwrap();
                 self.exit = true;
-                self.conn.roundtrip().unwrap();
             }
             Keysym::BackSpace => {
-                tracing::trace!("Backspacing!");
                 self.lock_data.password_buffer.pop();
-                return;
             }
             _ => {
                 let key_char = event.keysym.key_char();
-                if key_char.is_some() {
-                    self.lock_data.password_buffer.push(key_char.unwrap());
+                if let Some(k) = key_char {
+                    self.lock_data.password_buffer.push(k);
                 }
             }
         }
-        tracing::trace!(
-            "Leaving Key press: {event:?}, password_buffer: {}",
-            self.lock_data.password_buffer
-        );
     }
 
     fn release_key(
@@ -85,10 +75,9 @@ impl KeyboardHandler for AppData {
         _qh: &QueueHandle<Self>,
         _keyboard: &smithay_client_toolkit::reexports::client::protocol::wl_keyboard::WlKeyboard,
         _serial: u32,
-        modifiers: smithay_client_toolkit::seat::keyboard::Modifiers,
+        _modifiers: smithay_client_toolkit::seat::keyboard::Modifiers,
         _layout: u32,
     ) {
-        tracing::trace!("Keyboard Handler: Update Modifiers {modifiers:?}");
     }
 
     fn update_repeat_info(
@@ -96,9 +85,8 @@ impl KeyboardHandler for AppData {
         _conn: &Connection,
         _qh: &QueueHandle<Self>,
         _keyboard: &smithay_client_toolkit::reexports::client::protocol::wl_keyboard::WlKeyboard,
-        info: smithay_client_toolkit::seat::keyboard::RepeatInfo,
+        _info: smithay_client_toolkit::seat::keyboard::RepeatInfo,
     ) {
-        tracing::trace!("Keyboard Handler: Update Repeat Information {info:?}");
     }
 
     fn update_keymap(

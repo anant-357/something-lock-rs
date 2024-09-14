@@ -47,7 +47,7 @@ impl Config {
             blur_type: None,
         }
     }
-    pub fn from_config_file(base: xdg::BaseDirectories) -> Self {
+    pub fn from_config_file(base: &xdg::BaseDirectories) -> Self {
         let config_file = base
             .place_config_file("conf.ini")
             .expect("cannot create config directory");
@@ -116,10 +116,15 @@ impl Config {
                             });
                         }
                         "video" => {}
-                        "shader" => {}
+                        "shader" => {
+                            let shader_section = conf.section(Some("shader")).unwrap();
+                            config.media_type = Some(MediaType::Shader);
+                            config.media_path =
+                                Some(PathBuf::from(shader_section.get("path").unwrap()));
+                        }
                         _ => {
                             tracing::error!(
-                                "Type defined in config not one of 'image', 'video', 'animation'"
+                                "Type defined in config not one of 'image', 'video', 'shader'"
                             );
                             std::process::exit(1);
                         }

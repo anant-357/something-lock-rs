@@ -7,7 +7,7 @@ use crate::app::AppData;
 
 impl OutputHandler for AppData {
     fn output_state(&mut self) -> &mut OutputState {
-        &mut self.states.output_state
+        &mut self.wayland.output_state
     }
 
     fn new_output(
@@ -16,7 +16,7 @@ impl OutputHandler for AppData {
         _qh: &QueueHandle<Self>,
         output: wl_output::WlOutput,
     ) {
-        let output_info = self.states.output_state.info(&output).unwrap();
+        let output_info = self.wayland.output_state.info(&output).unwrap();
         tracing::trace!("New Output {:#?}", output_info);
     }
 

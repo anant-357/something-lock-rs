@@ -13,8 +13,12 @@ smithay-client-toolkit = "0.19.1"
 whoami = "1.5.1"
 rust-ini = "0.21.0"
 wayland-backend = { version = "0.3.4", features = ["client_system"] }
-wgpu = { version = "22.1.0", default-features = false, features = ["wgsl"] }
+wgpu = { version = "22.1.0", default-features = false, features = ["glsl", "spirv", "wgsl"] }
 futures = "0.3.30"
 raw-window-handle = "0.6.2"
 xdg = "2.5.2"
+wayland-client = "0.31.5"
+image = "0.25.2"
+bytemuck = "1.17.1"
+shaderc = "0.8.3"
 

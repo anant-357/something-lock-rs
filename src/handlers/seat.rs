@@ -16,7 +16,7 @@ impl SeatHandler for AppData {
     }
 
     fn seat_state(&mut self) -> &mut SeatState {
-        &mut self.states.seat_state
+        &mut self.wayland.seat_state
     }
 
     fn new_capability(
@@ -26,11 +26,11 @@ impl SeatHandler for AppData {
         seat: smithay_client_toolkit::reexports::client::protocol::wl_seat::WlSeat,
         capability: smithay_client_toolkit::seat::Capability,
     ) {
-        if capability == Capability::Keyboard && self.keyboard.is_none() {
+        if capability == Capability::Keyboard && self.wayland.keyboard.is_none() {
             tracing::trace!("Adding keyboard!");
-            self.keyboard = Some(
-                self.states.seat_state
-                    .get_keyboard(&qh, &seat, None)
+            self.wayland.keyboard = Some(
+                self.wayland.seat_state
+                    .get_keyboard(qh, &seat, None)
                     .expect("Failed to create keyboard!"),
             )
         }
@@ -43,8 +43,8 @@ impl SeatHandler for AppData {
         _seat: smithay_client_toolkit::reexports::client::protocol::wl_seat::WlSeat,
         capability: smithay_client_toolkit::seat::Capability,
     ) {
-        if capability == Capability::Keyboard && self.keyboard.is_some() {
-            self.keyboard.take().unwrap().release();
+        if capability == Capability::Keyboard && self.wayland.keyboard.is_some() {
+            self.wayland.keyboard.take().unwrap().release();
         }
     }
 

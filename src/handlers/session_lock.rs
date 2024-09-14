@@ -9,15 +9,15 @@ use smithay_client_toolkit::{
     },
 };
 
-use crate::{graphics::{GContext, GSurfaceWrapper}, media::Media, AppData};
+use crate::{graphics::surface::LockSurfaceWrapper, media::Media, AppData};
 
 impl SessionLockHandler for AppData {
     fn locked(&mut self, conn: &Connection, qh: &QueueHandle<Self>, session_lock: SessionLock) {
         tracing::trace!("Locked");
-        for output in self.states.output_state.outputs() {
-            let output_info = self.states.output_state.info(&output).unwrap();
+        for output in self.wayland.output_state.outputs() {
+            let output_info = self.wayland.output_state.info(&output).unwrap();
             let size = output_info.logical_size.unwrap();
-            let surface = self.states.compositor_state.create_surface(&qh);
+            let surface = self.wayland.compositor_state.create_surface(qh);
             let lock_surface = session_lock.create_lock_surface(surface, &output, qh);
 
             let raw_display_handle =
@@ -28,26 +28,21 @@ impl SessionLockHandler for AppData {
                 raw_window_handle::RawWindowHandle::Wayland(WaylandWindowHandle::new(
                     NonNull::new(lock_surface.wl_surface().id().as_ptr() as *mut _).unwrap(),
                 ));
-            let mut gsurface = GSurfaceWrapper::new();
+            let mut gsurface = LockSurfaceWrapper::new(lock_surface);
             let surface_target = wgpu::SurfaceTargetUnsafe::RawHandle {
                 raw_window_handle,
                 raw_display_handle,
             };
-            let mut gcontext = GContext::new();
 
             let vsurface = unsafe {
-                gcontext
+                self.graphics_context
                     .instance
                     .create_surface_unsafe(surface_target)
                     .unwrap()
             };
-            executor::block_on(gcontext.init(Some(&vsurface)));
-            gsurface.init(&gcontext, vsurface, (size.0 as u32, size.1 as u32));
-            self.graphics_context = Some(gcontext);
-            self.gsurfaces.push(gsurface);
-            self.loop_handle.insert_idle(|app_data| {
-                app_data.lock_data.add_surface(lock_surface);
-            });
+            executor::block_on(self.graphics_context.init(Some(&vsurface)));
+            gsurface.init(&self.graphics_context, vsurface, (size.0 as u32, size.1 as u32));
+            self.lock_data.add_surface(gsurface);            
         }
     }
 
@@ -71,14 +66,22 @@ impl SessionLockHandler for AppData {
     ) {
         tracing::trace!("Configure Event");
         let (width, height) = configure.new_size;
-        let gcontext = self.graphics_context.as_ref().unwrap();
-        let surface = self.gsurfaces.get_mut(0).unwrap();
-        surface.resize(gcontext, (width, height));
+        let surface = self.lock_data.session_lock_surfaces.get_mut(0).unwrap();
+        surface.resize(&self.graphics_context, (width, height));
         match self.media {
             Media::Solid(color) => {
-                gcontext.render_color(&surface,color ).unwrap();
-            }
-                _ => {tracing::trace!("Image, Video not supported yet!");}
+                self.graphics_context.render_color(surface, color).unwrap();
+            },
+            Media::Image(ref mut im) => {
+                im.resize(width, height);
+                self.graphics_context.create_texture_from_image_for_surface(surface, im.buffer.clone().unwrap());
+//                gcontext.render_texture(&surface).unwrap();
+            },
+            Media::Shader(ref path) => {
+                self.graphics_context.create_texture_from_shader_for_surface(surface, path.as_path());
+                self.graphics_context.render_texture(surface).unwrap();
+            },
+            _ => {tracing::trace!("Video not supported yet!");}
         }
        
         session_lock_surface.wl_surface().commit();
