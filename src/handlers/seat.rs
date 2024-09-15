@@ -29,7 +29,8 @@ impl SeatHandler for AppData {
         if capability == Capability::Keyboard && self.wayland.keyboard.is_none() {
             tracing::trace!("Adding keyboard!");
             self.wayland.keyboard = Some(
-                self.wayland.seat_state
+                self.wayland
+                    .seat_state
                     .get_keyboard(qh, &seat, None)
                     .expect("Failed to create keyboard!"),
             )

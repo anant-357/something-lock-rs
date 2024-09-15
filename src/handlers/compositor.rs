@@ -57,5 +57,4 @@ impl CompositorHandler for AppData {
     }
 }
 
-
 smithay_client_toolkit::delegate_compositor!(AppData);

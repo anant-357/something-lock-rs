@@ -6,8 +6,8 @@ use wgpu::Color;
 pub enum MediaType {
     Shader,
     Image,
+    Screenshot,
     Solid,
-    Video,
 }
 
 impl Default for MediaType {
@@ -78,6 +78,23 @@ impl Config {
                                     .to_string(),
                             );
                         }
+                        "screenshot" => {
+                            let screenshot_section = conf.section(Some("screenshot")).unwrap();
+                            config.media_type = Some(MediaType::Screenshot);
+                            config.blur_size = Some(
+                                screenshot_section
+                                    .get("blur_size")
+                                    .unwrap_or(IMAGE_BLUR_SIZE_DEFAULT_STR)
+                                    .parse::<u32>()
+                                    .unwrap_or(IMAGE_BLUR_SIZE_DEFAULT),
+                            );
+                            config.blur_type = Some(
+                                screenshot_section
+                                    .get("blur_type")
+                                    .unwrap_or(IMAGE_BLUR_TYPE_DEFAULT)
+                                    .to_string(),
+                            );
+                        }
                         "solid" => {
                             let solid_section = conf.section(Some("solid")).unwrap();
                             config.media_type = Some(MediaType::Solid);
@@ -139,10 +156,10 @@ impl Config {
                 tracing::warn!("No config found at {:?}, using defaults", config_file);
                 config.media_type = Some(MediaType::default());
                 config.color = Some(wgpu::Color {
-                    r: (SOLID_RED_DEFAULT/255) as f64,
-                    g: (SOLID_GREEN_DEFAULT/255) as f64,
-                    b: (SOLID_BLUE_DEFAULT/255) as f64,
-                    a: (SOLID_ALPHA_DEFAULT/255) as f64,                    
+                    r: (SOLID_RED_DEFAULT / 255) as f64,
+                    g: (SOLID_GREEN_DEFAULT / 255) as f64,
+                    b: (SOLID_BLUE_DEFAULT / 255) as f64,
+                    a: (SOLID_ALPHA_DEFAULT / 255) as f64,
                 });
             }
         }

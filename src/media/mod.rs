@@ -5,10 +5,11 @@ use std::{path::PathBuf, str::FromStr};
 
 use crate::config::{Config, MediaType as CMediaType};
 use image_media::Image;
-use wgpu::Color;
 use video_media::Video;
+use wgpu::Color;
 
 pub enum Media {
+    Screenshot,
     Image(Image),
     Solid(Color),
     _Video(Video),
@@ -22,13 +23,15 @@ impl Media {
             Some(CMediaType::Image) => {
                 tracing::trace!("Init Image");
                 Media::Image(Image::init(
-                config.media_path.as_ref().unwrap(),
-                config.blur_type.clone().unwrap_or("".to_string()),
-                config.blur_size.unwrap_or(0),
-            ))
-            },
+                    config.media_path.as_ref().unwrap(),
+                    config.blur_type.clone().unwrap_or("".to_string()),
+                    config.blur_size.unwrap_or(0),
+                ))
+            }
             Some(CMediaType::Solid) => Media::Solid(config.color.unwrap()),
-            Some(CMediaType::Shader) => Media::Shader(PathBuf::from_str(config.media_path.as_ref().unwrap().to_str().unwrap()).unwrap()),
+            Some(CMediaType::Shader) => Media::Shader(
+                PathBuf::from_str(config.media_path.as_ref().unwrap().to_str().unwrap()).unwrap(),
+            ),
             _ => Media::NA,
         }
     }

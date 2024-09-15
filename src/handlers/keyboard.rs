@@ -40,12 +40,12 @@ impl KeyboardHandler for AppData {
             Keysym::Return => {
                 match self.lock_data.unlock_with_auth() {
                     Ok(_) => {
-                        tracing::trace!("Authenticated, unlocked!")
+                        tracing::trace!("Authenticated, unlocked!");
+                        conn.roundtrip().unwrap();
+                        self.exit = true;
                     }
                     Err(e) => tracing::warn!("{e}"),
                 };
-                conn.roundtrip().unwrap();
-                self.exit = true;
             }
             Keysym::BackSpace => {
                 self.lock_data.password_buffer.pop();

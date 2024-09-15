@@ -4,7 +4,9 @@ use smithay_client_toolkit::{
     registry_handlers,
 };
 use wayland_client::{
-    delegate_noop, protocol::{wl_compositor, wl_registry}, Connection, Dispatch, QueueHandle
+    delegate_noop,
+    protocol::{wl_compositor, wl_registry},
+    Connection, Dispatch, QueueHandle,
 };
 
 use crate::app::AppData;

@@ -1,12 +1,12 @@
 use wgpu::{
-    Adapter, BindGroup, Buffer, Device, DeviceDescriptor, Instance, InstanceDescriptor, InstanceFlags, Queue, RenderPipeline, RequestAdapterOptions, Surface, Texture
+    Adapter, BindGroup, Buffer, Device, DeviceDescriptor, Instance, InstanceDescriptor,
+    InstanceFlags, Queue, RenderPipeline, RequestAdapterOptions, Surface, Texture,
 };
 
-pub mod surface;
-mod shader;
 mod image;
+mod shader;
+pub mod surface;
 use crate::graphics::surface::LockSurfaceWrapper;
-
 
 pub struct Graphics {
     pub instance: Instance,
@@ -54,7 +54,6 @@ impl Graphics {
             index_buffer: None,
         }
     }
-
 
     pub async fn init(&mut self, compatible_surface: Option<&Surface<'_>>) {
         let adapter = self

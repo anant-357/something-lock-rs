@@ -4,4 +4,3 @@ mod output;
 mod registry;
 mod seat;
 mod session_lock;
-

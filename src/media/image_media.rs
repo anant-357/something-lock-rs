@@ -1,6 +1,9 @@
-use std::{path::{Path, PathBuf}, process};
+use std::{
+    path::{Path, PathBuf},
+    process,
+};
 
-use image::{imageops::resize, RgbaImage};
+use image::{buffer::ConvertBuffer, imageops::resize, RgbaImage};
 
 #[derive(Copy, Clone, Debug)]
 pub enum Blur {
@@ -76,7 +79,17 @@ impl Image {
                 tracing::trace!("Buffer not found");
                 resize_needed = true;
                 match image::open(self.path.clone()) {
-                    Ok(image) => image.as_rgba8().unwrap().clone(),
+                    Ok(image) => {
+                        if let Some(r) = image.as_rgba8() {
+                            r.clone()
+                        } else if let Some(r) = image.as_rgb8() {
+                            let r2: RgbaImage = r.convert();
+                            r2
+                        } else {
+                            tracing::error!("Unable to convert to rgba8");
+                            process::exit(1);
+                        }
+                    }
                     Err(e) => {
                         // Some("screenshot") => {
                         //     let conn = libwayshot::WayshotConnection::new().unwrap();

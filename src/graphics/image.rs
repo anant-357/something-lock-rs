@@ -64,7 +64,6 @@ impl Graphics {
         let queue = self.queue();
         let adapter = self.adapter();
 
-        
         let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Vertex Buffer"),
             contents: bytemuck::cast_slice(VERTICES),
@@ -76,7 +75,6 @@ impl Graphics {
             contents: bytemuck::cast_slice(INDICES),
             usage: wgpu::BufferUsages::INDEX,
         });
-
 
         let texture_size = wgpu::Extent3d {
             width: image.width(),
@@ -137,7 +135,7 @@ impl Graphics {
                     },
                     wgpu::BindGroupLayoutEntry {
                         binding: 1,
-                        visibility: wgpu::ShaderStages::FRAGMENT,                      
+                        visibility: wgpu::ShaderStages::FRAGMENT,
                         ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
                         count: None,
                     },

@@ -18,7 +18,7 @@ futures = "0.3.30"
 raw-window-handle = "0.6.2"
 xdg = "2.5.2"
 wayland-client = "0.31.5"
-image = "0.25.2"
+image = { version = "0.25.2", default-features = false, features = ["jpeg", "png"] }
 bytemuck = "1.17.1"
 shaderc = "0.8.3"
 

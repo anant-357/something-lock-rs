@@ -22,6 +22,7 @@ use crate::config::Config;
 
 pub struct Wayland {
     pub conn: Connection,
+    pub loop_handle: LoopHandle<'static, AppData>,
     pub compositor: Option<wl_compositor::WlCompositor>,
     pub compositor_state: CompositorState,
     pub registry_state: RegistryState,
@@ -32,12 +33,9 @@ pub struct Wayland {
 
 pub struct AppData {
     pub xdg: BaseDirectories,
-    pub loop_handle: LoopHandle<'static, Self>,
     pub wayland: Wayland,
     pub graphics_context: Graphics,
     pub lock_data: LockState,
-    pub media: Media,
-    pub _config: Config,
     pub exit: bool,
 }
 
@@ -51,9 +49,9 @@ impl AppData {
             CEventLoop::try_new().expect("Failed to initialize the event loop!");
         let mut app_data = AppData {
             xdg: base,
-            loop_handle: event_loop.handle(),
             wayland: Wayland {
                 conn: conn.clone(),
+                loop_handle: event_loop.handle(),
                 compositor: None,
                 compositor_state: CompositorState::bind(&globals, &qh).unwrap(),
                 registry_state: RegistryState::new(&globals),
@@ -66,9 +64,8 @@ impl AppData {
                 SessionLockState::new(&globals, &qh)
                     .lock(&qh)
                     .expect("ext-session-lock not supported"),
+                Media::from_config(&config),
             ),
-            media: Media::from_config(&config),
-            _config: config,
             exit: false,
         };
         tracing::trace!("Initiating lock");

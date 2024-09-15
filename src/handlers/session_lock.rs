@@ -41,8 +41,12 @@ impl SessionLockHandler for AppData {
                     .unwrap()
             };
             executor::block_on(self.graphics_context.init(Some(&vsurface)));
-            gsurface.init(&self.graphics_context, vsurface, (size.0 as u32, size.1 as u32));
-            self.lock_data.add_surface(gsurface);            
+            gsurface.init(
+                &self.graphics_context,
+                vsurface,
+                (size.0 as u32, size.1 as u32),
+            );
+            self.lock_data.add_surface(gsurface);
         }
     }
 
@@ -68,22 +72,30 @@ impl SessionLockHandler for AppData {
         let (width, height) = configure.new_size;
         let surface = self.lock_data.session_lock_surfaces.get_mut(0).unwrap();
         surface.resize(&self.graphics_context, (width, height));
-        match self.media {
+        match self.lock_data.media {
             Media::Solid(color) => {
                 self.graphics_context.render_color(surface, color).unwrap();
-            },
+            }
             Media::Image(ref mut im) => {
                 im.resize(width, height);
-                self.graphics_context.create_texture_from_image_for_surface(surface, im.buffer.clone().unwrap());
-                self.graphics_context.render_texture_for_image(&surface).unwrap();
-            },
+                self.graphics_context
+                    .create_texture_from_image_for_surface(surface, im.buffer.clone().unwrap());
+                self.graphics_context
+                    .render_texture_for_image(surface)
+                    .unwrap();
+            }
             Media::Shader(ref path) => {
-                self.graphics_context.create_texture_from_shader_for_surface(surface, path.as_path());
-                self.graphics_context.render_texture_for_shader(surface).unwrap();
-            },
-            _ => {tracing::trace!("Video not supported yet!");}
+                self.graphics_context
+                    .create_texture_from_shader_for_surface(surface, path.as_path());
+                self.graphics_context
+                    .render_texture_for_shader(surface)
+                    .unwrap();
+            }
+            _ => {
+                tracing::trace!("Video not supported yet!");
+            }
         }
-       
+
         session_lock_surface.wl_surface().commit();
     }
 }

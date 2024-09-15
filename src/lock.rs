@@ -1,22 +1,25 @@
 use smithay_client_toolkit::session_lock::SessionLock;
 
 use crate::graphics::surface::LockSurfaceWrapper;
+use crate::media::Media;
 use crate::pam::auth;
 
 pub struct LockState {
     session_lock: SessionLock,
     retries: usize,
     pub session_lock_surfaces: Vec<LockSurfaceWrapper>,
+    pub media: Media,
     pub password_buffer: String,
 }
 
 impl LockState {
-    pub fn from_lock(session_lock: SessionLock) -> Self {
+    pub fn from_lock(session_lock: SessionLock, media: Media) -> Self {
         Self {
             session_lock,
             retries: 0,
             password_buffer: String::new(),
             session_lock_surfaces: Vec::new(),
+            media,
         }
     }
 

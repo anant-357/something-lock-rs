@@ -32,7 +32,6 @@ impl Vertex {
     }
 }
 
-
 const VERTICES: &[Vertex] = &[
     Vertex {
         position: [-1.0, 1.0, 0.0],
@@ -117,7 +116,7 @@ impl Graphics {
         self.pipeline = Some(render_pipeline);
     }
 
-        pub fn render_texture_for_shader(
+    pub fn render_texture_for_shader(
         &self,
         surface: &LockSurfaceWrapper,
     ) -> Result<(), wgpu::SurfaceError> {
