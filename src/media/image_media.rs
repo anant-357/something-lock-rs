@@ -64,8 +64,9 @@ impl Image {
                         width,
                         height
                     );
-                    resize(&buf, width, height, image::imageops::FilterType::Nearest);
-                    buf
+                    let new_buf = resize(&buf, width, height, image::imageops::FilterType::Nearest);
+                    tracing::trace!("Resized to : {}, {}", new_buf.width(), new_buf.height());
+                    new_buf
                 } else {
                     tracing::trace!("Resize Not Needed");
                     buf

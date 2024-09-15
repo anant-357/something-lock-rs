@@ -1,11 +1,12 @@
 use smithay_client_toolkit::session_lock::SessionLockSurface;
-use wgpu::{Surface, SurfaceConfiguration, TextureUsages};
+use wgpu::{Surface, SurfaceConfiguration, Texture, TextureUsages};
 
 use super::Graphics;
 
 pub struct LockSurfaceWrapper {
     surface: Option<Surface<'static>>,
     config: Option<SurfaceConfiguration>,
+    texture: Option<Texture>,
     size: (u32, u32),
     _lock_surface: SessionLockSurface
 }
@@ -15,6 +16,7 @@ impl LockSurfaceWrapper {
         Self {
             surface: None,
             config: None,
+            texture: None,
             size: (0, 0),
             _lock_surface: lock_surface
         }
@@ -50,6 +52,14 @@ impl LockSurfaceWrapper {
         self.size = size;
     }
 
+    pub fn set_texture(&mut self, texture: Texture) {
+        self.texture = Some(texture);
+    }
+
+    pub fn get_texture(&self) -> &Texture{
+        self.texture.as_ref().unwrap()
+    }
+    
     pub fn resize(&mut self, gcontext: &Graphics, size: (u32, u32)) {
         let config = self.config.as_mut().unwrap();
         config.width = size.0;

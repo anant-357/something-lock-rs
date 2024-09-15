@@ -75,11 +75,11 @@ impl SessionLockHandler for AppData {
             Media::Image(ref mut im) => {
                 im.resize(width, height);
                 self.graphics_context.create_texture_from_image_for_surface(surface, im.buffer.clone().unwrap());
-//                gcontext.render_texture(&surface).unwrap();
+                self.graphics_context.render_texture_for_image(&surface).unwrap();
             },
             Media::Shader(ref path) => {
                 self.graphics_context.create_texture_from_shader_for_surface(surface, path.as_path());
-                self.graphics_context.render_texture(surface).unwrap();
+                self.graphics_context.render_texture_for_shader(surface).unwrap();
             },
             _ => {tracing::trace!("Video not supported yet!");}
         }
