@@ -8,8 +8,8 @@ pub struct LockState {
     session_lock: SessionLock,
     retries: usize,
     pub session_lock_surfaces: Vec<LockSurfaceWrapper>,
-    pub media: Media,
     pub password_buffer: String,
+    pub media: Media,
 }
 
 impl LockState {

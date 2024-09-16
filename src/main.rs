@@ -7,7 +7,6 @@ mod media;
 mod pam;
 
 use app::AppData;
-use config::Config;
 use std::io;
 use tracing::Level;
 
@@ -22,6 +21,5 @@ fn initialize_tracing() {
 fn main() {
     initialize_tracing();
     let xdg_dirs = xdg::BaseDirectories::with_prefix("something_lock").unwrap();
-    let config = Config::from_config_file(&xdg_dirs);
-    AppData::connect(config, xdg_dirs);
+    AppData::connect(xdg_dirs);
 }

@@ -1,6 +1,8 @@
+use image::RgbaImage;
 use std::fs::read_to_string;
-
 use wgpu::util::DeviceExt;
+
+use crate::media::image_media::Image;
 
 use super::{surface::LockSurfaceWrapper, Graphics};
 
@@ -32,6 +34,12 @@ impl Vertex {
     }
 }
 
+#[repr(C)]
+#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
+struct Blur {
+    radius: u32,
+}
+
 const VERTICES: &[Vertex] = &[
     Vertex {
         position: [-1.0, 1.0, 0.0],
@@ -53,36 +61,43 @@ const VERTICES: &[Vertex] = &[
 
 const INDICES: &[u16] = &[0, 1, 2, 2, 3, 0];
 
-impl Graphics {
-    pub fn create_texture_from_image_for_surface(
-        &mut self,
-        surface: &mut LockSurfaceWrapper,
-        image: image::RgbaImage,
-    ) {
-        let surface_size = surface.size();
-        let device = self.device();
-        let queue = self.queue();
-        let adapter = self.adapter();
-
+impl LockSurfaceWrapper {
+    fn set_vertex_buffer(&mut self, device: &wgpu::Device) {
         let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Vertex Buffer"),
             contents: bytemuck::cast_slice(VERTICES),
             usage: wgpu::BufferUsages::VERTEX,
         });
+        self.vertex_buffer = Some(vertex_buffer);
+    }
 
+    fn set_index_buffer(&mut self, device: &wgpu::Device) {
         let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Index Buffer"),
             contents: bytemuck::cast_slice(INDICES),
             usage: wgpu::BufferUsages::INDEX,
         });
+        self.index_buffer = Some(index_buffer);
+    }
 
+    fn set_bind_group(&mut self, bind_group: wgpu::BindGroup) {
+        self.bind_group = Some(bind_group);
+    }
+
+    fn set_pipeline(&mut self, pipeline: wgpu::RenderPipeline) {
+        self.pipeline = Some(pipeline);
+    }
+}
+
+impl Graphics {
+    pub fn texture_from_image(&self, image: &RgbaImage, surface_size: (u32, u32)) -> wgpu::Texture {
         let texture_size = wgpu::Extent3d {
             width: image.width(),
             height: image.height(),
             depth_or_array_layers: 1,
         };
 
-        let texture = device.create_texture(&wgpu::TextureDescriptor {
+        let texture = self.device().create_texture(&wgpu::TextureDescriptor {
             label: Some("input texture"),
             size: texture_size,
             mip_level_count: 1,
@@ -93,9 +108,9 @@ impl Graphics {
             view_formats: &[],
         });
 
-        queue.write_texture(
+        self.queue().write_texture(
             texture.as_image_copy(),
-            &image,
+            image,
             wgpu::ImageDataLayout {
                 offset: 0,
                 bytes_per_row: Some(4 * surface_size.0),
@@ -103,6 +118,30 @@ impl Graphics {
             },
             texture_size,
         );
+
+        texture
+    }
+
+    pub fn create_texture_from_image_for_surface(
+        &mut self,
+        surface: &mut LockSurfaceWrapper,
+        image: &mut Image,
+    ) {
+        let surface_size = surface.size();
+        let device = self.device();
+        let adapter = self.adapter();
+
+        surface.set_vertex_buffer(device);
+        surface.set_index_buffer(device);
+
+        let blur_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Blur Buffer"),
+            contents: bytemuck::cast_slice(&[Blur { radius: image.blur }]),
+            usage: wgpu::BufferUsages::UNIFORM,
+        });
+
+        let texture = self.texture_from_image(&image.buffer, surface_size);
+
         let texture_view = texture.create_view(&wgpu::TextureViewDescriptor::default());
         let texture_sampler = device.create_sampler(&wgpu::SamplerDescriptor {
             address_mode_u: wgpu::AddressMode::ClampToEdge,
@@ -139,6 +178,16 @@ impl Graphics {
                         ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
                         count: None,
                     },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 2,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Buffer {
+                            ty: wgpu::BufferBindingType::Uniform,
+                            has_dynamic_offset: false,
+                            min_binding_size: None,
+                        },
+                        count: None,
+                    },
                 ],
                 label: Some("Texture Bind Group Layout"),
             });
@@ -154,12 +203,18 @@ impl Graphics {
                     binding: 1,
                     resource: wgpu::BindingResource::Sampler(&texture_sampler),
                 },
+                wgpu::BindGroupEntry {
+                    binding: 2,
+                    resource: blur_buffer.as_entire_binding(),
+                },
             ],
             label: Some("Texture Bind Group"),
         });
+
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: None,
             bind_group_layouts: &[&texture_bind_group_layout],
+            //bind_group_layouts: &[&texture_bind_group_layout, &blur_bind_group_layout],
             push_constant_ranges: &[],
         });
 
@@ -187,10 +242,8 @@ impl Graphics {
             cache: None,
         });
 
-        self.vertex_buffer = Some(vertex_buffer);
-        self.index_buffer = Some(index_buffer);
-        self.bind_group = Some(texture_bind_group);
-        self.pipeline = Some(render_pipeline);
+        surface.set_bind_group(texture_bind_group);
+        surface.set_pipeline(render_pipeline);
         surface.set_texture(texture);
     }
 
@@ -224,13 +277,12 @@ impl Graphics {
                 timestamp_writes: None,
                 occlusion_query_set: None,
             });
-            render_pass.set_pipeline(self.pipeline.as_ref().unwrap());
-            render_pass.set_bind_group(0, self.bind_group.as_ref().unwrap(), &[]);
-            render_pass.set_vertex_buffer(0, self.vertex_buffer.as_ref().unwrap().slice(..));
-            render_pass.set_index_buffer(
-                self.index_buffer.as_ref().unwrap().slice(..),
-                wgpu::IndexFormat::Uint16,
-            );
+            render_pass.set_pipeline(surface.pipeline());
+            render_pass.set_bind_group(0, surface.bind_group(), &[]);
+            //            render_pass.set_bind_group(1, self.blur_bind_group.as_ref().unwrap(), &[]);
+            render_pass.set_vertex_buffer(0, surface.vertex_buffer().slice(..));
+            render_pass
+                .set_index_buffer(surface.index_buffer().slice(..), wgpu::IndexFormat::Uint16);
             render_pass.draw_indexed(0..INDICES.len() as u32, 0, 0..1);
         }
 

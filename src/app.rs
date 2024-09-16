@@ -18,8 +18,6 @@ use smithay_client_toolkit::{
 use wayland_client::protocol::wl_compositor;
 use xdg::BaseDirectories;
 
-use crate::config::Config;
-
 pub struct Wayland {
     pub conn: Connection,
     pub loop_handle: LoopHandle<'static, AppData>,
@@ -40,7 +38,7 @@ pub struct AppData {
 }
 
 impl AppData {
-    pub fn connect(config: Config, base: BaseDirectories) {
+    pub fn connect(base: BaseDirectories) {
         let conn = Connection::connect_to_env().unwrap();
 
         let (globals, mut event_queue) = registry_queue_init(&conn).unwrap();
@@ -48,7 +46,7 @@ impl AppData {
         let event_loop: CEventLoop<AppData> =
             CEventLoop::try_new().expect("Failed to initialize the event loop!");
         let mut app_data = AppData {
-            xdg: base,
+            xdg: base.clone(),
             wayland: Wayland {
                 conn: conn.clone(),
                 loop_handle: event_loop.handle(),
@@ -64,7 +62,7 @@ impl AppData {
                 SessionLockState::new(&globals, &qh)
                     .lock(&qh)
                     .expect("ext-session-lock not supported"),
-                Media::from_config(&config),
+                Media::from_config(&base),
             ),
             exit: false,
         };

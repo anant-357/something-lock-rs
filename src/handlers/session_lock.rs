@@ -1,4 +1,4 @@
-use std::ptr::NonNull;
+use std::{path::PathBuf, ptr::NonNull};
 
 use futures::executor;
 use raw_window_handle::{WaylandDisplayHandle, WaylandWindowHandle};
@@ -28,7 +28,8 @@ impl SessionLockHandler for AppData {
                 raw_window_handle::RawWindowHandle::Wayland(WaylandWindowHandle::new(
                     NonNull::new(lock_surface.wl_surface().id().as_ptr() as *mut _).unwrap(),
                 ));
-            let mut gsurface = LockSurfaceWrapper::new(lock_surface);
+
+            let mut gsurface = LockSurfaceWrapper::new(lock_surface, Media::from_config(&self.xdg));
             let surface_target = wgpu::SurfaceTargetUnsafe::RawHandle {
                 raw_window_handle,
                 raw_display_handle,
@@ -79,20 +80,20 @@ impl SessionLockHandler for AppData {
             Media::Image(ref mut im) => {
                 im.resize(width, height);
                 self.graphics_context
-                    .create_texture_from_image_for_surface(surface, im.buffer.clone().unwrap());
+                    .create_texture_from_image_for_surface(surface, im);
                 self.graphics_context
                     .render_texture_for_image(surface)
                     .unwrap();
             }
             Media::Shader(ref path) => {
                 self.graphics_context
-                    .create_texture_from_shader_for_surface(surface, path.as_path());
+                    .create_texture_from_shader_for_surface(surface, &PathBuf::from(path));
                 self.graphics_context
                     .render_texture_for_shader(surface)
                     .unwrap();
             }
             _ => {
-                tracing::trace!("Video not supported yet!");
+                tracing::trace!("Screenshot, Video not supported yet!");
             }
         }
 

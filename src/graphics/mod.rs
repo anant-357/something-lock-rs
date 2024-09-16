@@ -15,7 +15,7 @@ pub struct Graphics {
     device: Option<Device>,
     queue: Option<Queue>,
     texture: Option<Texture>,
-    bind_group: Option<BindGroup>,
+    texture_bind_group: Option<BindGroup>,
     vertex_buffer: Option<Buffer>,
     index_buffer: Option<Buffer>,
 }
@@ -31,6 +31,10 @@ impl Graphics {
 
     pub fn queue(&self) -> &Queue {
         self.queue.as_ref().unwrap()
+    }
+
+    fn vertex_buffer(&self) -> &Buffer {
+        self.vertex_buffer.as_ref().unwrap()
     }
 
     pub fn new() -> Self {
@@ -49,7 +53,7 @@ impl Graphics {
             device: None,
             queue: None,
             texture: None,
-            bind_group: None,
+            texture_bind_group: None,
             vertex_buffer: None,
             index_buffer: None,
         }
